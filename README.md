@@ -1,2 +1,2 @@
 # sleven79.github.io
-SLE's owner repository
+SLE's owner's repository
