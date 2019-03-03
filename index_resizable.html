@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Blockly for Lasso/oRIOn</title>
+  <script src="blockly/blockly_compressed.js"></script>
+  <script src="blockly/blocks_compressed.js"></script>
+  <script src="blockly/msg/js/en.js"></script>
+  <script src="blockly/blocks/oRIOn.js"></script>
+  <script src="blockly/javascript_compressed.js"></script>
+  <script src="blockly/generators/oRIOn/oRIOn.js"></script>  
+  <script src="blockly/FileSaver.js"></script>  
+  <style>
+    html, body {
+      height: 1000px;
+      margin: 0;
+    }
+    body {
+      background-color: #fff;
+      font-family: sans-serif;
+      overflow-x: hidden;      
+      overflow-y: scroll;            
+    }
+    h1 {
+      font-weight: normal;
+      font-size: 140%;
+    }
+    table {
+      height: 100%;
+      width: 95%;
+    }     
+    #blocklyArea {
+      height: 50%;
+    }
+    #blocklyDesktop {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #generatorArea {
+      height: 100%;
+      border: 1px solid powderblue;
+      overflow-x: scroll;      
+      overflow-y: scroll;        
+    }	  
+  </style>
+</head>
+<body>
+  <table id="blocklyDesktop">
+    <thead>
+      <tr>
+        <td>
+          <h1><a href="https://developers.google.com/blockly/">Blockly</a> &gt;
+          <a href="../index.html">Demo</a> &gt; for Lasso/oRIOn</h1>
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="height: 50%">
+        <td>
+          <div id="blocklyArea" style="height: 640px"></div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <h1>Generated code:</h1>
+        </td>
+      </tr>
+      <tr style="height: 50%">
+        <td>
+          <div id="generatorArea" style="height: 640px"><pre><code id="generatorCode"></code></pre></div>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>
+          <p><button onclick="saveWorkspaceEvent()">Save workspace by clicking here!</button>&nbsp;<input type="text" id="filename" value="workspace.txt"></p>
+          <p><button onclick="loadWorkspaceEvent(loadWorkspace)">Load workspace by clicking here!</button></p>
+        </td>        
+      </tr>
+    </tfoot>
+  </table>
+  
+  <div id="blocklyDiv" style="position: absolute"></div>
+
+  <xml xmlns="http://www.w3.org/1999/xhtml" id="toolbox" style="display: none;">
+    <category name="oRIOn">
+      <category name="Pins" colour="#A65C94">
+        <block type="orion_pin_container"></block>
+        <block type="orion_config_pin">
+          <field name="PORT_ID">0</field>
+          <field name="PIN_ID">0</field>
+          <field name="TYPE">0</field>          
+        </block>
+        <block type="orion_input_pin"></block>
+      </category>  
+      <category name="Counters" colour="#74A65C">  
+        <block type="orion_counter_container"></block>      
+        <block type="orion_configure_counter_mutable"></block>
+        <block type="orion_counter"></block>    
+      </category>
+      <category name="Inputs" colour="#5CA681">
+        <block type="orion_input_container"></block>      
+        <block type="orion_configure_input_from_pin_mutable"></block>    
+        <block type="orion_configure_input_mutable"></block>    
+        <block type="orion_input"></block>
+        <block type="orion_group_input"></block>
+      </category>
+      <category name="Transformers" colour="#A65C5C">
+        <block type="orion_transformer_container"></block>      
+        <block type="orion_transformer_mutable"></block>
+        <block type="orion_configure_transformer_mutable"></block>    
+        <block type="orion_transformer"></block>
+        <block type="orion_group_transformer"></block>
+      </category>  
+      <category name="Outputs" colour="#815CA6">
+        <block type="orion_output_container"></block>      
+        <block type="orion_configure_output_to_pin_mutable"></block>     
+        <block type="orion_group_output"></block>
+      </category>
+      <category name="Numerics" colour="#A6A65C">
+        <block type="orion_constant">
+          <field name="CONST">0</field>
+        </block>
+        <block type="orion_time_constant"></block>
+        <block type="orion_defaults"></block>
+        <block type="orion_PID_parameters">
+          <value name="KP">
+            <shadow type="orion_constant">
+                <field name="CONST">1</field>
+            </shadow>
+          </value>
+          <value name="KI">
+            <shadow type="orion_constant">
+                <field name="CONST">0</field>
+            </shadow>
+          </value>        
+          <value name="KD">
+            <shadow type="orion_constant">
+                <field name="CONST">0</field>
+            </shadow>
+          </value>                
+        </block>
+        <block type="orion_range"></block>
+      </category>  
+      <category name="Groups" colour="#5C68A6">
+        <block type="orion_group"></block>      
+      </category>
+    </category>
+    <sep gap="32"></sep>
+    <category name="lasso">
+      <block type="lasso_register_datacell"></block> 
+      <block type="lasso_register_orion_wire"></block> 
+    </category>  
+    <sep gap="32"></sep>  
+    <category name="Code generator">
+      <button text="Generate C-code" callbackKey="generateCcodePressed"></button>
+      <button text="Save workspace" callbackKey="generateCcodePressed"></button>
+    </category>
+  </xml>
+
+  <xml xmlns="http://www.w3.org/1999/xhtml" id="startBlocks" style="display: none;">
+    <block type="orion_init" x="10" y="10">
+      <statement name="STATEMENTS">
+        <block type="orion_pin_container">
+          <next>
+            <block type="orion_counter_container">
+              <next>                
+                <block type="orion_input_container">
+                  <next>
+                    <block type="orion_transformer_container">
+                      <next>
+                        <block type="orion_output_container"></block>                            
+                      </next>
+                    </block>                
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>                        
+        </block>         
+      </statement>
+    </block>
+    
+    <block type="lasso_init" x="10" y="400">
+    </block>
+  </xml>  
+  
+  <script>
+    var blocklyArea = document.getElementById('blocklyArea');
+    var blocklyDiv = document.getElementById('blocklyDiv');
+    var demoWorkspace = Blockly.inject(blocklyDiv,
+        {media: 'blockly/media/',
+         toolbox: document.getElementById('toolbox')});
+    var onresize = function(e) {
+      // Compute the absolute coordinates and dimensions of blocklyArea.
+      var element = blocklyArea;
+      var x = 0;
+      var y = 0;
+      do {
+        x += element.offsetLeft;
+        y += element.offsetTop;
+        element = element.offsetParent;
+      } while (element);
+      // Position blocklyDiv over blocklyArea.
+      blocklyDiv.style.left = x + 'px';
+      blocklyDiv.style.top = y + 'px';
+      blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+      blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+      Blockly.svgResize(demoWorkspace);
+    };
+    window.addEventListener('resize', onresize, false);
+    onresize();
+    Blockly.svgResize(demoWorkspace);
+    
+    // place default start blocks
+    Blockly.Xml.domToWorkspace(document.getElementById('startBlocks'),
+                               demoWorkspace);   
+    /*
+    var blocks = demoWorkspace.getAllBlocks();
+    for (var i = 0; i < blocks.length; i++) {
+        if (blocks[i].type == "orion_init") {
+            blocks[i].setDeletable(false);
+            blocks[i].setMovable(false);
+        }
+    }
+    */
+
+    // generator function
+    Blockly.JavaScript.INDENT = "";
+    function myUpdateFunction(event) {
+        var code = Blockly.JavaScript.workspaceToCode(demoWorkspace);
+        document.getElementById('generatorCode').innerHTML = code;
+    }
+    demoWorkspace.addChangeListener(myUpdateFunction); 
+    
+    // save and load events
+    function saveWorkspaceEvent() {  
+        try {
+            var isFileSaverSupported = !!new Blob;
+        } catch (e) {
+            alert("Javascript 'Blob' not supported!" + e);
+            return;
+        }
+        
+        var name = document.getElementById('filename').value;
+        
+        var xml = Blockly.Xml.workspaceToDom(demoWorkspace);
+        var xml_text = Blockly.Xml.domToPrettyText(xml);
+        var blob = new Blob([xml_text], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, name);  // from FileSaver.js
+    }
+    
+    function loadWorkspace(xml_text) {
+        demoWorkspace.clear();
+        //console.log(xml_text);
+        var xml = Blockly.Xml.textToDom(xml_text);
+        Blockly.Xml.domToWorkspace(xml, demoWorkspace);    
+    }
+    
+    function loadWorkspaceEvent(func) {
+        readFile = function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var contents = e.target.result;
+                fileInput.func(contents)
+                document.body.removeChild(fileInput)
+            }
+            reader.readAsText(file)
+        }
+        fileInput = document.createElement("input")
+        fileInput.type='file'
+        fileInput.style.display='none'
+        fileInput.onchange=readFile
+        fileInput.func=func
+        document.body.appendChild(fileInput)
+        fileInput.click();
+    }
+    
+    // delete event
+    function deleteEvent(event) {
+      if (Blockly.Events.BLOCK_DELETE == event.type) {
+        Blockly.Constants.oRIOn.CLEAN_IDS_ON_DELETE(event);
+      }
+    }
+    demoWorkspace.addChangeListener(deleteEvent);    
+  </script>
+</body>
+</html>
