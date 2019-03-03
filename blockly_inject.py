@@ -11,6 +11,10 @@ BUTTONS_AREA = 'buttonsArea'
 BLOCKLY_AREA_HEIGHT = '500px'   # blockly needs an absolute height specification to show up in page
 GENERATOR_AREA_HEIGHT = '100%'
 
+# MORE, Lasso on Github, Idea behind Lasso
+ICON_LINK_STANDARD = 'https://mobirise.co/'
+ICON_LINK_REPLACEMENT = ['https://github.com/sleven79/lasso-host', 'https://github.com/sleven79/lasso-host', 'https://github.com/sleven79/lasso-host']
+
 def inject():
     """Inject blockly code from my own template into the mobirise index.html"""
     
@@ -24,6 +28,8 @@ def inject():
     scripts_head = ''
     xml_body = ''
     scripts_body = ''
+    
+    icon_link_rep_counter = 0
         
     with open(SOURCE, 'r') as f:
         toolbox = None
@@ -31,7 +37,7 @@ def inject():
         scriptsBody = False
     
         # extract all <script> and <xml> tags from <head> and <body>
-        for line in f:
+        for line in f:           
             if scripts_body == '':
                 if xml_body == '':
                     if scripts_head == '':
@@ -86,6 +92,11 @@ def inject():
     in_body = False
     
     for line in template:
+        # replace mobirise standard icon link
+        if line.find(ICON_LINK_STANDARD) >= 0:
+            line = line.replace(ICON_LINK_STANDARD, ICON_LINK_REPLACEMENT[icon_link_rep_counter])
+            icon_link_rep_counter += 1
+            
         if in_body:
             if line.find(BLOCKLY_AREA) >= 0:
                 line = line.replace(BLOCKLY_AREA, blocklyArea)
