@@ -2116,7 +2116,8 @@ Blockly.defineBlocksWithJsonArray([
 Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_init",
-  "message0": " Lasso host on %1 %2 %3 Dynamic strobe: %4",
+  "lastDummyAlign0": "RIGHT",
+  "message0": " Lasso host on target %1 %2 %3 Strobe: %4",
   "args0": [
     {
       "type": "field_dropdown",
@@ -2143,25 +2144,25 @@ Blockly.defineBlocksWithJsonArray([
           "OPTION_Mbed"
         ]
       ]
-    },  
+    },
     {
       "type": "input_dummy"
-    },
+    },       
     {
       "type": "input_statement",
       "name": "STATEMENTS",
       "check": "lasso"
-    },
+    },          
     {
       "type": "field_dropdown",
       "name": "DYNASTROBE",
       "options": [
         [
-          "Off",
+          "static",
           "OPTION_OFF"
         ],
         [
-          "On",
+          "dynamic",
           "OPTION_ON"
         ]
       ]
@@ -2174,7 +2175,7 @@ Blockly.defineBlocksWithJsonArray([
 },    
 {
   "type": "lasso_register_datacell_mutable",
-  "message0": "Register %1 variable \" %2 \" as %3 x %4 and %5",
+  "message0": "Register %1 datacell %2 as %3 x %4 and %5",
   "args0": [
     {
       "type": "field_dropdown",
@@ -2193,7 +2194,7 @@ Blockly.defineBlocksWithJsonArray([
     {
       "type": "field_input",
       "name": "VARIABLE",
-      "text": "yourVarName"
+      "text": "yourDatacellName"
     },
     {
       "type": "field_number",
@@ -2272,101 +2273,20 @@ Blockly.defineBlocksWithJsonArray([
 },
 {
   "type": "lasso_register_datacell_mutable_base",
-  "message0": "Register %1 variable \" %2 \" as %3 x %4 and %5 %6 %7",
+  "message0": "Add custom datacell properties? %1 Callback? %2 Tick period? %3",
   "args0": [
-    {
-      "type": "field_dropdown",
-      "name": "ACCESS",
-      "options": [
-        [
-          "read-only",
-          "OPTION_READONLY"
-        ],
-        [
-          "writeable",
-          "OPTION_WRITEABLE"
-        ]
-      ]
-    },
-    {
-      "type": "field_input",
-      "name": "VARIABLE",
-      "text": "yourVarName"
-    },
-    {
-      "type": "field_number",
-      "name": "NUMBER",
-      "value": 1,
-      "min": 1,
-      "precision": 1
-    },
-    {
-      "type": "field_dropdown",
-      "name": "TYPE",
-      "options": [
-        [
-          "bool",
-          "LASSO_BOOL"
-        ],
-        [
-          "char",
-          "LASSO_CHAR"
-        ],
-        [
-          "uint8",
-          "LASSO_UINT8"
-        ],
-        [
-          "int8",
-          "LASSO_INT8"
-        ],
-        [
-          "uint16",
-          "LASSO_UIN16"
-        ],
-        [
-          "int16",
-          "LASSO_INT16"
-        ],
-        [
-          "uint32",
-          "LASSO_UINT32"
-        ],
-        [
-          "int32",
-          "LASSO_INT32"
-        ],
-        [
-          "float",
-          "LASSO_FLOAT"
-        ]
-      ]
-    },
-    {
-      "type": "field_dropdown",
-      "name": "ENABLED",
-      "options": [
-        [
-          "include in strobe",
-          "OPTION_YES"
-        ],
-        [
-          "make permanent",
-          "OPTION_PERMANENT"
-        ],
-        [
-          "exclude from strobe",
-          "OPTION_NO"
-        ]
-      ]
-    },
     {
       "type": "input_dummy"
     },    
     {
       "type": "input_statement",
-      "name": "STATEMENTS",
+      "name": "STATEMENTS_CALLBACK",
       "check": "lasso_custom_callback_mutable_option"
+    },
+    {
+      "type": "input_statement",
+      "name": "STATEMENTS_PERIOD",
+      "check": "lasso_custom_period_mutable_option"
     }    
   ],
   "previousStatement": "lasso",
@@ -2438,6 +2358,9 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
         this.getField('DYNASTROBE').setValidator(function(option) {
             if (this.sourceBlock_.workspace) { 
                 dynastrobe = (option == 'OPTION_ON');
+                if (dynastrobe) {   // enable 'lasso_custom_period_mutable_option'
+                
+                }
                 //console.log(dynastrobe);
             }
         });
@@ -2453,6 +2376,7 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
  */
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   customCallback_: false,
+  customTickPeriod_: false,
   
   /**
    * Create XML to represent whether extra features should be present.
@@ -2461,11 +2385,14 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   mutationToDom: function() {
     var container = null;
-    if (this.customCallback_) {
+    if ((this.customCallback_) || (this.customTickPeriod_)) {
         container = document.createElement('mutation');
 
         if (this.customCallback_) {
             container.setAttribute('customCallback', true);
+        }
+        if (this.customTickPeriod_) {
+            container.setAttribute('customTickPeriod', true);
         }
     }
     return container;
@@ -2477,6 +2404,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   domToMutation: function(xmlElement) {
     this.customCallback_ = (xmlElement.getAttribute('customCallback') == 'true');
+    this.customTickPeriod_ = (xmlElement.getAttribute('customTickPeriod') == 'true');
     this.updateShape_();
   },
   /**
@@ -2487,23 +2415,23 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   decompose: function(workspace) {
       var topBlock = workspace.newBlock(this.type + '_base');
-      topBlock.initSvg();  
+      topBlock.initSvg();      
       
-      // copy current settings of underlying block
-      topBlock.getField('ACCESS').setValue(this.getField('ACCESS').getValue());
-      topBlock.getField('VARIABLE').setValue(this.getField('VARIABLE').getValue());
-      topBlock.getField('NUMBER').setValue(this.getField('NUMBER').getValue());
-      topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());
-      topBlock.getField('ENABLED').setValue(this.getField('ENABLED').getValue());      
-      //topBlock.getField('VARIABLE').EDITABLE = false;      
+      var connection;
+      var subBlock;
       
       // connect subblock(s), if present
       if (this.customCallback_) {
-        var connection = topBlock.getFirstStatementConnection();          
-        var subBlock = workspace.newBlock('lasso_custom_callback_mutable_option');
+        subBlock = workspace.newBlock('lasso_custom_callback_mutable_option');
         subBlock.initSvg();
-        connection.connect(subBlock.previousConnection);
+        topBlock.getInput('STATEMENTS_CALLBACK').connection.connect(subBlock.previousConnection);
       }
+      
+      if (this.customTickPeriod_) {
+        subBlock = workspace.newBlock('lasso_custom_period_mutable_option');
+        subBlock.initSvg();
+        topBlock.getInput('STATEMENTS_PERIOD').connection.connect(subBlock.previousConnection);
+      }      
       
       return topBlock;
   },
@@ -2513,13 +2441,8 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block   
    */
   compose: function(topBlock) {    
-      this.customCallback_ = (topBlock.getFirstStatementConnection().targetBlock() != null);
-
-      this.getField('ACCESS').setValue(topBlock.getField('ACCESS').getValue());
-      this.getField('VARIABLE').setValue(topBlock.getField('VARIABLE').getValue());
-      this.getField('NUMBER').setValue(topBlock.getField('NUMBER').getValue());      
-      this.getField('TYPE').setValue(topBlock.getField('TYPE').getValue());
-      this.getField('ENABLED').setValue(topBlock.getField('ENABLED').getValue());
+      this.customCallback_ = (topBlock.getInput('STATEMENTS_CALLBACK').connection.targetBlock() !== null);
+      this.customTickPeriod_ = (topBlock.getInput('STATEMENTS_PERIOD').connection.targetBlock() !== null);
       
       this.updateShape_();  // update original block in underlying workspace
   },
@@ -2529,28 +2452,38 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block
    */
   updateShape_: function() {
-    var customCallbackInputExists = this.getInput('CUSTOM_CALLBACK_INPUT');
+    var customInputExists = this.getInput('CUSTOM_INPUT');
     
-    // remove inputs but save connections
-    if (customCallbackInputExists) {
-        this.removeInput('CUSTOM_CALLBACK_INPUT');
+    // remove input before restoring it
+    if (customInputExists) {
+        this.removeInput('CUSTOM_INPUT');
     }
 
+    var input = null;
+    
     // reinstall inputs and reconnect
     if (this.customCallback_) {
-        console.log('Hallo');
-        this.appendDummyInput('CUSTOM_CALLBACK_INPUT')
-            .setAlign(Blockly.ALIGN_RIGHT)
-            .appendField('Custom callback:')
-            .appendField(new Blockly.FieldTextInput('yourCallback'))
+        input = this.appendDummyInput('CUSTOM_INPUT')
+                    .setAlign(Blockly.ALIGN_RIGHT)
+                    .appendField('Callback:')
+                    .appendField(new Blockly.FieldTextInput('yourCallback'))
     }
+    
+    if (this.customTickPeriod_) {
+        if (input === null) {
+               this.appendDummyInput('CUSTOM_INPUT')
+                   .setAlign(Blockly.ALIGN_RIGHT);
+        }
+        input.appendField('Tick period:')
+             .appendField(new Blockly.FieldNumber(1,1,'inf',1));       
+    }       
   }
 };
 
 Blockly.Extensions.registerMutator('lasso_register_datacell_mutator',
     Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN,
     null, 
-    ['lasso_custom_callback_mutable_option']);
+    ['lasso_custom_callback_mutable_option', 'lasso_custom_period_mutable_option']);
     
     
 //----------------//
@@ -2572,9 +2505,18 @@ Blockly.defineBlocksWithJsonArray([
   "type": "lasso_custom_callback_mutable_option",
   "message0": "Custom callback",
   "inputsInline": true,
-  "previousStatement": null,
+  "previousStatement": null,  
   "colour": 195,
   "tooltip": "Custom callback",
+  "helpUrl": ""
+},
+{
+  "type": "lasso_custom_period_mutable_option",
+  "message0": "Custom tick period",
+  "inputsInline": true,
+  "previousStatement": null,
+  "colour": 195,
+  "tooltip": "Custom tick period",
   "helpUrl": ""
 }
 ]);    
