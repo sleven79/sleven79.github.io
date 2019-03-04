@@ -760,7 +760,7 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     return code.concat("if (lasso_hostRegisterMEM()) {\r\n    " + user_callbacks[2] + "\r\n}\r\n\r\n");
 };
 
-Blockly.JavaScript['lasso_register_datacell'] = function(block) {
+Blockly.JavaScript['lasso_register_datacell_mutable'] = function(block) {
     // ---------------------
     // block type: STATEMENT
     // ---------------------

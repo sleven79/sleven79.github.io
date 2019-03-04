@@ -1,6 +1,7 @@
 'use strict';
 
 goog.provide('Blockly.Constants.oRIOn');
+goog.provide('Blockly.Constants.lasso');
 
 goog.require('Blockly.Blocks');
 goog.require('Blockly.Field');
@@ -13,7 +14,14 @@ goog.require('Blockly');
 
 const block_type = { COUNTER: 0, INPUT: 1, TRANSFORMER: 2, OUTPUT: 3, NUMERIC: 4};
 
-const block_type_map = new Map([['orion_counter', 0]]);
+const block_type_map = new Map([['orion_counter', 0],
+                                ['orion_group_counter', 0],
+                                ['orion_input', 1],
+                                ['orion_group_input', 1],
+                                ['orion_transformer', 2],
+                                ['orion_group_transformer', 3],
+                                ['orion_group_output', 4]
+                                ]);
 
 const block_types = [[['orion_configure_counter_mutable'], ['orion_counter']],
                    [['orion_configure_input_mutable'], ['orion_input', 'orion_group_input']],
@@ -22,6 +30,8 @@ const block_types = [[['orion_configure_counter_mutable'], ['orion_counter']],
                    [[], []]
                    ];  
 
+var dynastrobe = false;                   
+                   
 function* generateBlockTypes() {
     // [ [blocks with auto-assigned IDs], [associated blocks with user-assigned IDs] ]    
     for (let t of block_types) {
@@ -401,6 +411,27 @@ Blockly.defineBlocksWithJsonArray([
   "extensions": ["orion_extension"]
 },
 {
+  "type": "orion_group_counter",
+  "message0": "Group counter [ %1 ]",
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "BLOCK_ID",
+      "value": 1,
+      "min": 1,
+      "max": 256,
+      "precision": 1
+    }
+  ],
+  "inputsInline": false,
+  "previousStatement": "Group",
+  "nextStatement": "Group",
+  "colour": 100,
+  "tooltip": "oRIOn group counter",
+  "helpUrl": "",
+  "extensions": ["orion_extension"]
+},
+{
   "type": "orion_configure_counter_mutable",
   "message0": "[ %1 ] - %2",
   "args0": [
@@ -571,7 +602,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 150,
   "tooltip": "oRIOn input block",
   "helpUrl": "",
-  "extensions": ["orion_input_extension"]
+  "extensions": ["orion_extension"]
 },
 {
   "type": "orion_group_input",
@@ -592,7 +623,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 150,
   "tooltip": "oRIOn group input",
   "helpUrl": "",
-  "extensions": ["orion_input_extension"]
+  "extensions": ["orion_extension"]
 },
 {
   "type": "orion_configure_input_mutable",
@@ -861,23 +892,7 @@ Blockly.Extensions.register('orion_configure_input_extension',
             //alert('Block created');            
         }
     }
-);     
-
-/**
- * Extension to check value of input # in new input block.
- * Called once on block creation.
- * @this Blockly.Block
- */
-Blockly.Extensions.register('orion_input_extension',
-    function () {
-        this.getField('BLOCK_ID').setValidator(function(option) {
-            if (this.sourceBlock_.workspace) { 
-                var max_block_id = getNextFreeID(this.sourceBlock_.workspace, block_type.INPUT);   
-                if (option > max_block_id) return max_block_id;
-            }
-        });
-    }
-);    
+);         
 
     
 //--------------------//
@@ -903,7 +918,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 0,
   "tooltip": "oRIOn transformer block",
   "helpUrl": "",
-  "extensions": ["orion_transformer_extension"]
+  "extensions": ["orion_extension"]
 },
 {
   "type": "orion_group_transformer",
@@ -924,7 +939,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 0,
   "tooltip": "oRIOn group transformer",
   "helpUrl": "",
-  "extensions": ["orion_transformer_extension"]
+  "extensions": ["orion_extension"]
 },
 {
   "type": "orion_configure_transformer_mutable",
@@ -1679,22 +1694,6 @@ Blockly.Extensions.register('orion_configure_transformer_extension',
     }
 ); 
 
-/**
- * Extension to check value of user-assigned transformer ID in new transformer block.
- * Called once on block creation.
- * @this Blockly.Block
- */
-Blockly.Extensions.register('orion_transformer_extension',
-    function () {
-        this.getField('BLOCK_ID').setValidator(function(option) {
-            if (this.sourceBlock_.workspace) { 
-                var max_block_id = getNextFreeID(this.sourceBlock_.workspace, block_type.TRANSFORMER);  
-                if (option > max_block_id) return max_block_id;
-            }
-        });
-    }
-); 
-
 
 //---------------//
 // OUTPUT BLOCKS //
@@ -1721,7 +1720,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 270,
   "tooltip": "oRIOn group output",
   "helpUrl": "",
-  "extensions": ["orion_output_extension"]
+  "extensions": ["orion_extension"]
 },
 {
   "type": "orion_configure_output_to_pin_mutable",
@@ -1992,22 +1991,6 @@ Blockly.Extensions.register('orion_configure_output_extension',
         }
     }
 );       
-
-/**
- * Extension to check value of output # in new output source block.
- * Called on block creation.
- * @this Blockly.Block
- */
-Blockly.Extensions.register('orion_output_extension',
-    function () {
-        this.getField('BLOCK_ID').setValidator(function(option) {
-            if (this.sourceBlock_.workspace) { 
-                var max_block_id = getNextFreeID(this.sourceBlock_.workspace, block_type.OUTPUT);  
-                if (option > max_block_id) return max_block_id;
-            }
-        });
-    }
-);  
     
 
 //----------------//
@@ -2133,7 +2116,7 @@ Blockly.defineBlocksWithJsonArray([
 Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_init",
-  "message0": " lasso host on %1 %2 %3",
+  "message0": " Lasso host on %1 %2 %3 Dynamic strobe: %4",
   "args0": [
     {
       "type": "field_dropdown",
@@ -2168,14 +2151,29 @@ Blockly.defineBlocksWithJsonArray([
       "type": "input_statement",
       "name": "STATEMENTS",
       "check": "lasso"
-    }
+    },
+    {
+      "type": "field_dropdown",
+      "name": "DYNASTROBE",
+      "options": [
+        [
+          "Off",
+          "OPTION_OFF"
+        ],
+        [
+          "On",
+          "OPTION_ON"
+        ]
+      ]
+    }     
   ],
   "colour": 230,
   "tooltip": "lasso init",
-  "helpUrl": ""
+  "helpUrl": "",
+  "extensions": ["lasso_dynastrobe_extension"]
 },    
 {
-  "type": "lasso_register_datacell",
+  "type": "lasso_register_datacell_mutable",
   "message0": "Register %1 variable \" %2 \" as %3 x %4 and %5",
   "args0": [
     {
@@ -2269,6 +2267,112 @@ Blockly.defineBlocksWithJsonArray([
   "nextStatement": "lasso",
   "colour": 100,
   "tooltip": "lasso register datacell",
+  "helpUrl": "",
+  "mutator": "lasso_register_datacell_mutator",
+},
+{
+  "type": "lasso_register_datacell_mutable_base",
+  "message0": "Register %1 variable \" %2 \" as %3 x %4 and %5 %6 %7",
+  "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "ACCESS",
+      "options": [
+        [
+          "read-only",
+          "OPTION_READONLY"
+        ],
+        [
+          "writeable",
+          "OPTION_WRITEABLE"
+        ]
+      ]
+    },
+    {
+      "type": "field_input",
+      "name": "VARIABLE",
+      "text": "yourVarName"
+    },
+    {
+      "type": "field_number",
+      "name": "NUMBER",
+      "value": 1,
+      "min": 1,
+      "precision": 1
+    },
+    {
+      "type": "field_dropdown",
+      "name": "TYPE",
+      "options": [
+        [
+          "bool",
+          "LASSO_BOOL"
+        ],
+        [
+          "char",
+          "LASSO_CHAR"
+        ],
+        [
+          "uint8",
+          "LASSO_UINT8"
+        ],
+        [
+          "int8",
+          "LASSO_INT8"
+        ],
+        [
+          "uint16",
+          "LASSO_UIN16"
+        ],
+        [
+          "int16",
+          "LASSO_INT16"
+        ],
+        [
+          "uint32",
+          "LASSO_UINT32"
+        ],
+        [
+          "int32",
+          "LASSO_INT32"
+        ],
+        [
+          "float",
+          "LASSO_FLOAT"
+        ]
+      ]
+    },
+    {
+      "type": "field_dropdown",
+      "name": "ENABLED",
+      "options": [
+        [
+          "include in strobe",
+          "OPTION_YES"
+        ],
+        [
+          "make permanent",
+          "OPTION_PERMANENT"
+        ],
+        [
+          "exclude from strobe",
+          "OPTION_NO"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy"
+    },    
+    {
+      "type": "input_statement",
+      "name": "STATEMENTS",
+      "check": "lasso_custom_callback_mutable_option"
+    }    
+  ],
+  "previousStatement": "lasso",
+  "nextStatement": "lasso",
+  "colour": 100,
+  "tooltip": "lasso register datacell",
   "helpUrl": ""
 },
 {
@@ -2322,7 +2426,131 @@ Blockly.defineBlocksWithJsonArray([
   "helpUrl": ""
 }
 ]);
+  
+
+/**
+ * Extension to set validator function for setting global var "dynastrobe".
+ * Called once on block creation.
+ * @this Blockly.Block
+ */
+Blockly.Extensions.register('lasso_dynastrobe_extension',
+    function () {
+        this.getField('DYNASTROBE').setValidator(function(option) {
+            if (this.sourceBlock_.workspace) { 
+                dynastrobe = (option == 'OPTION_ON');
+                //console.log(dynastrobe);
+            }
+        });
+    }
+);  
+  
+
+/**
+ * Mixin for mutator functions in the 'lasso_register_datacell_mutable' extension.
+ * @mixin
+ * @augments Blockly.Block
+ * @package
+ */
+Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
+  customCallback_: false,
+  
+  /**
+   * Create XML to represent whether extra features should be present.
+   * @return {Element} XML storage element.
+   * @this Blockly.Block
+   */
+  mutationToDom: function() {
+    var container = null;
+    if (this.customCallback_) {
+        container = document.createElement('mutation');
+
+        if (this.customCallback_) {
+            container.setAttribute('customCallback', true);
+        }
+    }
+    return container;
+  },
+  /**
+   * Parse XML to restore the extra features.
+   * @param {!Element} xmlElement XML storage element.
+   * @this Blockly.Block
+   */
+  domToMutation: function(xmlElement) {
+    this.customCallback_ = (xmlElement.getAttribute('customCallback') == 'true');
+    this.updateShape_();
+  },
+  /**
+   * Populate mutator's workspace by decomposing original block.
+   * @param {!Blockly.Workspace} workspace mutator's workspace.
+   * @return {!Blockly.Block} root block in mutator.
+   * @this Blockly.Block   
+   */
+  decompose: function(workspace) {
+      var topBlock = workspace.newBlock(this.type + '_base');
+      topBlock.initSvg();  
+      
+      // copy current settings of underlying block
+      topBlock.getField('ACCESS').setValue(this.getField('ACCESS').getValue());
+      topBlock.getField('VARIABLE').setValue(this.getField('VARIABLE').getValue());
+      topBlock.getField('NUMBER').setValue(this.getField('NUMBER').getValue());
+      topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());
+      topBlock.getField('ENABLED').setValue(this.getField('ENABLED').getValue());      
+      //topBlock.getField('VARIABLE').EDITABLE = false;      
+      
+      // connect subblock(s), if present
+      if (this.customCallback_) {
+        var connection = topBlock.getFirstStatementConnection();          
+        var subBlock = workspace.newBlock('lasso_custom_callback_mutable_option');
+        subBlock.initSvg();
+        connection.connect(subBlock.previousConnection);
+      }
+      
+      return topBlock;
+  },
+  /**
+   * Save mutator dialog's content to original block.
+   * @param {!Blockly.Block} topBlock Root block in mutator.
+   * @this Blockly.Block   
+   */
+  compose: function(topBlock) {    
+      this.customCallback_ = (topBlock.getFirstStatementConnection().targetBlock() != null);
+
+      this.getField('ACCESS').setValue(topBlock.getField('ACCESS').getValue());
+      this.getField('VARIABLE').setValue(topBlock.getField('VARIABLE').getValue());
+      this.getField('NUMBER').setValue(topBlock.getField('NUMBER').getValue());      
+      this.getField('TYPE').setValue(topBlock.getField('TYPE').getValue());
+      this.getField('ENABLED').setValue(topBlock.getField('ENABLED').getValue());
+      
+      this.updateShape_();  // update original block in underlying workspace
+  },
+  /**
+   * Modify the original block to have (or not have) additional features.
+   * @private
+   * @this Blockly.Block
+   */
+  updateShape_: function() {
+    var customCallbackInputExists = this.getInput('CUSTOM_CALLBACK_INPUT');
     
+    // remove inputs but save connections
+    if (customCallbackInputExists) {
+        this.removeInput('CUSTOM_CALLBACK_INPUT');
+    }
+
+    // reinstall inputs and reconnect
+    if (this.customCallback_) {
+        console.log('Hallo');
+        this.appendDummyInput('CUSTOM_CALLBACK_INPUT')
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField('Custom callback:')
+            .appendField(new Blockly.FieldTextInput('yourCallback'))
+    }
+  }
+};
+
+Blockly.Extensions.registerMutator('lasso_register_datacell_mutator',
+    Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN,
+    null, 
+    ['lasso_custom_callback_mutable_option']);
     
     
 //----------------//
@@ -2337,14 +2565,23 @@ Blockly.defineBlocksWithJsonArray([
   "inputsInline": true,
   "previousStatement": null,
   "colour": 195,
-  "tooltip": "",
+  "tooltip": "Custom defaults",
+  "helpUrl": ""
+},
+{
+  "type": "lasso_custom_callback_mutable_option",
+  "message0": "Custom callback",
+  "inputsInline": true,
+  "previousStatement": null,
+  "colour": 195,
+  "tooltip": "Custom callback",
   "helpUrl": ""
 }
 ]);    
 
 
 /**
- * Extension to check the value of a new block ID.
+ * Extension to set validator function that checks the value of a new block ID.
  * Called once on block creation.
  * @this Blockly.Block
  */
