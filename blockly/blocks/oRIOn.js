@@ -2273,21 +2273,15 @@ Blockly.defineBlocksWithJsonArray([
 },
 {
   "type": "lasso_register_datacell_mutable_base",
-  "message0": "Add custom datacell properties? %1 Callback? %2 Tick period? %3",
+  "message0": "Add custom datacell properties? %1 %2",
   "args0": [
     {
       "type": "input_dummy"
     },    
     {
       "type": "input_statement",
-      "name": "STATEMENTS_CALLBACK",
-      "check": "lasso_custom_callback_mutable_option"
-    },
-    {
-      "type": "input_statement",
-      "name": "STATEMENTS_PERIOD",
-      "check": "lasso_custom_period_mutable_option"
-    }    
+      "name": "STATEMENTS"
+    }   
   ],
   "previousStatement": "lasso",
   "nextStatement": "lasso",
@@ -2375,8 +2369,7 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
  * @package
  */
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
-  customCallback_: false,
-  customTickPeriod_: false,
+  customProperties_: [null, null],
   
   /**
    * Create XML to represent whether extra features should be present.
@@ -2385,16 +2378,16 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   mutationToDom: function() {
     var container = null;
-    if ((this.customCallback_) || (this.customTickPeriod_)) {
-        container = document.createElement('mutation');
-
-        if (this.customCallback_) {
-            container.setAttribute('customCallback', true);
-        }
-        if (this.customTickPeriod_) {
-            container.setAttribute('customTickPeriod', true);
+    
+    for (let i = 0; i < 2; i++) {
+        if (this.customProperties_[i] !== null) {
+            if (container === null) {
+                container = document.createElement('mutation');
+            }
+            container.setAttribute('customProperty' + String(i), this.customProperties_[i]);
         }
     }
+    
     return container;
   },
   /**
@@ -2403,8 +2396,10 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block
    */
   domToMutation: function(xmlElement) {
-    this.customCallback_ = (xmlElement.getAttribute('customCallback') == 'true');
-    this.customTickPeriod_ = (xmlElement.getAttribute('customTickPeriod') == 'true');
+    for (let i = 0; i < 2; i++) {
+        this.customProperties_[i] = xmlElement.getAttribute('customProperty' + String(i));
+    }
+    
     this.updateShape_();
   },
   /**
@@ -2417,21 +2412,18 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var topBlock = workspace.newBlock(this.type + '_base');
       topBlock.initSvg();      
       
-      var connection;
+      var connection = topBlock.getInput('STATEMENTS').connection;
       var subBlock;
       
       // connect subblock(s), if present
-      if (this.customCallback_) {
-        subBlock = workspace.newBlock('lasso_custom_callback_mutable_option');
-        subBlock.initSvg();
-        topBlock.getInput('STATEMENTS_CALLBACK').connection.connect(subBlock.previousConnection);
-      }
-      
-      if (this.customTickPeriod_) {
-        subBlock = workspace.newBlock('lasso_custom_period_mutable_option');
-        subBlock.initSvg();
-        topBlock.getInput('STATEMENTS_PERIOD').connection.connect(subBlock.previousConnection);
-      }      
+      for (let i = 0; i < 2; i++) {
+          if (this.customProperties_[i] !== null) {
+              subBlock = workspace.newBlock(this.customProperties_[i]);
+              subBlock.initSvg();
+              connection.connect(subBlock.previousConnection);
+              connection = subBlock.nextConnection;
+          }
+      }    
       
       return topBlock;
   },
@@ -2441,8 +2433,18 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block   
    */
   compose: function(topBlock) {    
-      this.customCallback_ = (topBlock.getInput('STATEMENTS_CALLBACK').connection.targetBlock() !== null);
-      this.customTickPeriod_ = (topBlock.getInput('STATEMENTS_PERIOD').connection.targetBlock() !== null);
+      var target = topBlock.getInput('STATEMENTS').connection.targetBlock();
+      
+      // save connected blocks in the right order
+      for (let i = 0; i < 2; i++) {
+        if (target !== null) {
+            this.customProperties_[i] = target.type;         
+            target = target.getNextBlock();
+        }
+        else {
+            this.customProperties_[i] = null;
+        }
+      }
       
       this.updateShape_();  // update original block in underlying workspace
   },
@@ -2452,30 +2454,34 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block
    */
   updateShape_: function() {
-    var customInputExists = this.getInput('CUSTOM_INPUT');
-    
     // remove input before restoring it
-    if (customInputExists) {
+    if (this.getInput('CUSTOM_INPUT')) {
         this.removeInput('CUSTOM_INPUT');
     }
 
     var input = null;
     
     // reinstall inputs and reconnect
-    if (this.customCallback_) {
-        input = this.appendDummyInput('CUSTOM_INPUT')
-                    .setAlign(Blockly.ALIGN_RIGHT)
-                    .appendField('Callback:')
-                    .appendField(new Blockly.FieldTextInput('yourCallback'))
-    }
-    
-    if (this.customTickPeriod_) {
-        if (input === null) {
-               this.appendDummyInput('CUSTOM_INPUT')
-                   .setAlign(Blockly.ALIGN_RIGHT);
+    for (let i = 0; i < 2; i++) {
+        if (this.customProperties_[i] !== null) {
+            if (input === null) {
+                input = this.appendDummyInput('CUSTOM_INPUT')
+                            .setAlign(Blockly.ALIGN_RIGHT);
+            }
+            switch (this.customProperties_[i]) {
+                case 'lasso_custom_callback_mutable_option' : {
+                    input.appendField('Callback:')
+                         .appendField(new Blockly.FieldTextInput('yourCallback'))                    
+                    break;
+                }
+                case 'lasso_custom_period_mutable_option' : {
+                    input.appendField('Tick period:')
+                         .appendField(new Blockly.FieldNumber(1,1,'inf',1));                      
+                    break;
+                }
+                default : {}
+            }
         }
-        input.appendField('Tick period:')
-             .appendField(new Blockly.FieldNumber(1,1,'inf',1));       
     }       
   }
 };
@@ -2505,7 +2511,8 @@ Blockly.defineBlocksWithJsonArray([
   "type": "lasso_custom_callback_mutable_option",
   "message0": "Custom callback",
   "inputsInline": true,
-  "previousStatement": null,  
+  "previousStatement": null, 
+  "nextStatement": null,    
   "colour": 195,
   "tooltip": "Custom callback",
   "helpUrl": ""
@@ -2515,6 +2522,7 @@ Blockly.defineBlocksWithJsonArray([
   "message0": "Custom tick period",
   "inputsInline": true,
   "previousStatement": null,
+  "nextStatement": null,      
   "colour": 195,
   "tooltip": "Custom tick period",
   "helpUrl": ""
