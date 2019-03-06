@@ -28,12 +28,12 @@ const block_types = [[['orion_configure_counter_mutable'], ['orion_counter']],
                    [['orion_configure_transformer_mutable'], ['orion_transformer', 'orion_group_transformer']],
                    [['orion_configure_output_to_pin_mutable'], ['orion_output', 'orion_group_output']],
                    [[], []]
-                   ];  
+                   ];
 
-var dynastrobe = false;                   
-                   
+var dynastrobe = false;
+
 function* generateBlockTypes() {
-    // [ [blocks with auto-assigned IDs], [associated blocks with user-assigned IDs] ]    
+    // [ [blocks with auto-assigned IDs], [associated blocks with user-assigned IDs] ]
     for (let t of block_types) {
         yield t;
     }
@@ -43,16 +43,16 @@ function* generateSpecificBlockTypes(index, user) {
     for (let t of block_types[index][user]) {
         yield t;
     }
-}    
+}
 
 function getNextFreeID(workspace, type) {
     var nextID = 0;
     for (let t of block_types[type][0]) {
-        nextID += workspace.getBlocksByType(t).length;            
+        nextID += workspace.getBlocksByType(t).length;
     }
     return nextID;
 }
-                   
+
 
 //-----------------------//
 // MAIN AND GROUP BLOCKS //
@@ -201,7 +201,7 @@ Blockly.defineBlocksWithJsonArray([
 // PIN BLOCKS //
 //------------//
 
-Blockly.defineBlocksWithJsonArray([ 
+Blockly.defineBlocksWithJsonArray([
 {
   "type": "orion_config_pin",
   "message0": "Port %1 Pin %2 as %3",
@@ -351,7 +351,7 @@ Blockly.defineBlocksWithJsonArray([
           "3"
         ]
       ]
-    },  
+    },
     {
       "type": "field_number",
       "name": "PORT_ID",
@@ -389,7 +389,7 @@ Blockly.defineBlocksWithJsonArray([
 // COUNTER BLOCKS //
 //----------------//
 
-Blockly.defineBlocksWithJsonArray([ 
+Blockly.defineBlocksWithJsonArray([
 {
   "type": "orion_counter",
   "message0": "counter [ %1 ]",
@@ -470,7 +470,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "PWM (duty/stop=0/1)",
           "OPTION_PWM4"
-        ]        
+        ]
       ]
     }
   ],
@@ -481,7 +481,7 @@ Blockly.defineBlocksWithJsonArray([
   "tooltip": "oRIOn counter block",
   "helpUrl": "",
   "mutator": "orion_configure_counter_mutator",
-  "extensions": ["orion_configure_counter_extension"] 
+  "extensions": ["orion_configure_counter_extension"]
 }
 ]);
 
@@ -493,7 +493,7 @@ Blockly.defineBlocksWithJsonArray([
  * @package
  */
 Blockly.Constants.oRIOn.COUNTER_MUTATOR_MIXIN = {
-  type_: 'OPTION_FREE_RUNNING',    
+  type_: 'OPTION_FREE_RUNNING',
   configInputs_: [false, false],
   /**
    * Create XML to represent whether the 'configInputs_' input(s) should be present.
@@ -505,7 +505,7 @@ Blockly.Constants.oRIOn.COUNTER_MUTATOR_MIXIN = {
     if (this.configInputs_[0] || this.configInputs_[1]) {
         container = document.createElement('mutation');
         this.type_ = container.setAttribute('type', this.type_);
-        for (let i = 0; i < 2; i++) {        
+        for (let i = 0; i < 2; i++) {
             if (this.configInputs_[i]) container.setAttribute('configInput' + String(i), true);
         }
     }
@@ -528,18 +528,18 @@ Blockly.Constants.oRIOn.COUNTER_MUTATOR_MIXIN = {
    * @private
    * @this Blockly.Block
    */
-  updateShape_: function() {    
+  updateShape_: function() {
     for (let i = 0; i < 2; i++) {
         let configInputExists = this.getInput('CONFIG' + String(i));
         if (this.configInputs_[i]) {
           if (!configInputExists) {
             this.appendValueInput('CONFIG' + String(i))
                 .setCheck('Float.1')
-                .setAlign(Blockly.ALIGN_RIGHT)            
+                .setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(counter_map.get(this.type_)[i + 1]);
           }
         } else if (configInputExists) {
-          this.removeInput('CONFIG' + String(i));        
+          this.removeInput('CONFIG' + String(i));
         }
     }
   }
@@ -553,16 +553,16 @@ Blockly.Constants.oRIOn.COUNTER_MUTATOR_MIXIN = {
  */
 Blockly.Constants.oRIOn.COUNTER_MUTATOR_EXTENSION = function() {
   this.getField('TYPE').setValidator(function(option) {
-    this.sourceBlock_.type_ = option;  
+    this.sourceBlock_.type_ = option;
     this.sourceBlock_.configInputs_ = [counter_map.get(option)[0] > 0, counter_map.get(option)[0] > 1];
     this.sourceBlock_.updateShape_();
-  });    
+  });
 }
 
 Blockly.Extensions.registerMutator('orion_configure_counter_mutator',
     Blockly.Constants.oRIOn.COUNTER_MUTATOR_MIXIN,
     Blockly.Constants.oRIOn.COUNTER_MUTATOR_EXTENSION);
-    	
+
 /**
  * Extension to automatically set the counter ID as a function of the workspace's existing counter set.
  * Called once on block creation.
@@ -570,20 +570,20 @@ Blockly.Extensions.registerMutator('orion_configure_counter_mutator',
  */
 Blockly.Extensions.register('orion_configure_counter_extension',
     function() {
-        var field = this.getField('BLOCK_ID');        
+        var field = this.getField('BLOCK_ID');
         field.EDITABLE = false;
-        if (this.workspace) {         
+        if (this.workspace) {
             field.setValue(getNextFreeID(this.workspace, block_type.COUNTER));
         }
     }
-);    
+);
 
 
 //--------------//
 // INPUT BLOCKS //
 //--------------//
 
-Blockly.defineBlocksWithJsonArray([ 
+Blockly.defineBlocksWithJsonArray([
 {
   "type": "orion_input",
   "message0": "input [ %1 ]",
@@ -650,8 +650,8 @@ Blockly.defineBlocksWithJsonArray([
   "tooltip": "oRIOn input block",
   "helpUrl": "",
   "mutator": "orion_configure_input_mutator",
-  "extensions": ["orion_configure_input_extension"] 
-},  
+  "extensions": ["orion_configure_input_extension"]
+},
 {
   "type": "orion_configure_input_mutable_base",
   "message0": "[ %1 ] - reads %2 %3",
@@ -680,7 +680,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 150,
   "tooltip": "oRIOn input block",
   "helpUrl": ""
-}, 
+},
 {
   "type": "orion_configure_input_from_pin_mutable",
   "message0": "input from %1 Port %2 Pin %3",
@@ -721,7 +721,7 @@ Blockly.defineBlocksWithJsonArray([
   "colour": 150,
   "tooltip": "oRIOn anonymous input-from-pin block",
   "helpUrl": "",
-  "mutator": "orion_configure_input_mutator" 
+  "mutator": "orion_configure_input_mutator"
 },
 {
   "type": "orion_configure_input_from_pin_mutable_base",
@@ -809,12 +809,12 @@ Blockly.Constants.oRIOn.INPUT_MUTATOR_MIXIN = {
    * Populate mutator's workspace by decomposing original block.
    * @param {!Blockly.Workspace} workspace mutator's workspace.
    * @return {!Blockly.Block} root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
   decompose: function(workspace) {
       var topBlock = workspace.newBlock(this.type + '_base');
-      topBlock.initSvg();  
-      
+      topBlock.initSvg();
+
       // copy current settings of underlying block
       if (this.type == 'orion_configure_input_mutable') {
           topBlock.getField('BLOCK_ID').setValue(this.getField('BLOCK_ID').getValue());
@@ -823,33 +823,33 @@ Blockly.Constants.oRIOn.INPUT_MUTATOR_MIXIN = {
       else {
           topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());
           topBlock.getField('PORT_ID').setValue(this.getField('PORT_ID').getValue());
-          topBlock.getField('PIN_ID').setValue(this.getField('PIN_ID').getValue());    
+          topBlock.getField('PIN_ID').setValue(this.getField('PIN_ID').getValue());
       }
-      
+
       if (this.customDefaults_) {
-        var connection = topBlock.getFirstStatementConnection();          
+        var connection = topBlock.getFirstStatementConnection();
         var subBlock = workspace.newBlock('orion_custom_defaults_mutable_option');
         subBlock.initSvg();
         connection.connect(subBlock.previousConnection);
       }
-      
+
       return topBlock;
   },
   /**
    * Save mutator dialog's content to original block.
    * @param {!Blockly.Block} topBlock Root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
   compose: function(topBlock) {
       this.customDefaults_ = (topBlock.getFirstStatementConnection().targetBlock() != null);
-      
+
       if (this.type == 'orion_configure_input_mutable') {
           this.getField('BLOCK_ID').setValue(topBlock.getField('BLOCK_ID').getValue());
       }
-      else {      
+      else {
         this.getField('TYPE').setValue(topBlock.getField('TYPE').getValue());
         this.getField('PORT_ID').setValue(topBlock.getField('PORT_ID').getValue());
-        this.getField('PIN_ID').setValue(topBlock.getField('PIN_ID').getValue());        
+        this.getField('PIN_ID').setValue(topBlock.getField('PIN_ID').getValue());
       }
       this.updateShape_();  // update original block in underlying workspace
   },
@@ -864,11 +864,11 @@ Blockly.Constants.oRIOn.INPUT_MUTATOR_MIXIN = {
       if (!inputExists) {
         this.appendValueInput('CUSTOM_DEFAULTS')
             .setCheck('Defaults')
-            .setAlign(Blockly.ALIGN_RIGHT)            
+            .setAlign(Blockly.ALIGN_RIGHT)
             .appendField('Defaults:');
       }
     } else if (inputExists) {
-      this.removeInput('CUSTOM_DEFAULTS');        
+      this.removeInput('CUSTOM_DEFAULTS');
     }
   }
 };
@@ -877,7 +877,7 @@ Blockly.Extensions.registerMutator('orion_configure_input_mutator',
     Blockly.Constants.oRIOn.INPUT_MUTATOR_MIXIN,
     null,
     ['orion_custom_defaults_mutable_option']);
-    	
+
 /**
  * Extension to automatically set the input # as a function of the workspace's existing input set.
  * Called once on block creation.
@@ -885,16 +885,16 @@ Blockly.Extensions.registerMutator('orion_configure_input_mutator',
  */
 Blockly.Extensions.register('orion_configure_input_extension',
     function() {
-        var field = this.getField('BLOCK_ID');        
+        var field = this.getField('BLOCK_ID');
         field.EDITABLE = false;
-        if (this.workspace) {         
+        if (this.workspace) {
             field.setValue(getNextFreeID(this.workspace, block_type.INPUT));
-            //alert('Block created');            
+            //alert('Block created');
         }
     }
-);         
+);
 
-    
+
 //--------------------//
 // TRANSFORMER BLOCKS //
 //--------------------//
@@ -972,7 +972,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "multiplies",
           "OPTION_MUL"
-        ],        
+        ],
         [
           "divides",
           "OPTION_DIV"
@@ -984,7 +984,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "integrates",
           "OPTION_INTEGRATE"
-        ],        
+        ],
         [
           "derives",
           "OPTION_DERIVE"
@@ -992,7 +992,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "filters (PID)",
           "OPTION_PID"
-        ],        
+        ],
         [
           "1/sqrt()",
           "OPTION_INVSQRT"
@@ -1000,7 +1000,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "sqrt()",
           "OPTION_SQRT"
-        ],        
+        ],
         [
           "tan()",
           "OPTION_TAN"
@@ -1016,7 +1016,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "power(2)",
           "OPTION_POW2"
-        ],  
+        ],
         [
           "exp()",
           "OPTION_EXP"
@@ -1024,7 +1024,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(2)",
           "OPTION_LOG2"
-        ], 
+        ],
         [
           "ln()",
           "OPTION_LN"
@@ -1032,7 +1032,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(10)",
           "OPTION_LOG"
-        ],      
+        ],
         [
           "atan()",
           "OPTION_ATAN"
@@ -1040,7 +1040,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "atan2()",
           "OPTION_ATAN2"
-        ],  
+        ],
         [
           "sin()",
           "OPTION_SIN"
@@ -1048,7 +1048,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "cos()",
           "OPTION_COS"
-        ],   
+        ],
         [
           "limits",
           "OPTION_LIM"
@@ -1056,7 +1056,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "abs()",
           "OPTION_ABS"
-        ],  
+        ],
         [
           "ceil()",
           "OPTION_CEIL"
@@ -1064,11 +1064,11 @@ Blockly.defineBlocksWithJsonArray([
         [
           "floor()",
           "OPTION_FLOOR"
-        ],          
+        ],
         [
           "mod()",
           "OPTION_MOD"
-        ]            
+        ]
       ]
     },
     {
@@ -1117,7 +1117,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "multiplies",
           "OPTION_MUL"
-        ],        
+        ],
         [
           "divides",
           "OPTION_DIV"
@@ -1129,7 +1129,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "integrates",
           "OPTION_INTEGRATE"
-        ],        
+        ],
         [
           "derives",
           "OPTION_DERIVE"
@@ -1137,7 +1137,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "filters (PID)",
           "OPTION_PID"
-        ],        
+        ],
         [
           "1/sqrt()",
           "OPTION_INVSQRT"
@@ -1145,7 +1145,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "sqrt()",
           "OPTION_SQRT"
-        ],        
+        ],
         [
           "tan()",
           "OPTION_TAN"
@@ -1161,7 +1161,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "power(2)",
           "OPTION_POW2"
-        ],  
+        ],
         [
           "exp()",
           "OPTION_EXP"
@@ -1169,7 +1169,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(2)",
           "OPTION_LOG2"
-        ], 
+        ],
         [
           "ln()",
           "OPTION_LN"
@@ -1177,7 +1177,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(10)",
           "OPTION_LOG"
-        ],      
+        ],
         [
           "atan()",
           "OPTION_ATAN"
@@ -1185,7 +1185,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "atan2()",
           "OPTION_ATAN2"
-        ],  
+        ],
         [
           "sin()",
           "OPTION_SIN"
@@ -1193,7 +1193,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "cos()",
           "OPTION_COS"
-        ],   
+        ],
         [
           "limits",
           "OPTION_LIM"
@@ -1201,7 +1201,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "abs()",
           "OPTION_ABS"
-        ],  
+        ],
         [
           "ceil()",
           "OPTION_CEIL"
@@ -1209,11 +1209,11 @@ Blockly.defineBlocksWithJsonArray([
         [
           "floor()",
           "OPTION_FLOOR"
-        ],          
+        ],
         [
           "mod()",
           "OPTION_MOD"
-        ]            
+        ]
       ]
     },
     {
@@ -1256,7 +1256,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "multiplies",
           "OPTION_MUL"
-        ],        
+        ],
         [
           "divides",
           "OPTION_DIV"
@@ -1268,7 +1268,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "integrates",
           "OPTION_INTEGRATE"
-        ],        
+        ],
         [
           "derives",
           "OPTION_DERIVE"
@@ -1276,7 +1276,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "filters (PID)",
           "OPTION_PID"
-        ],        
+        ],
         [
           "1/sqrt()",
           "OPTION_INVSQRT"
@@ -1284,7 +1284,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "sqrt()",
           "OPTION_SQRT"
-        ],        
+        ],
         [
           "tan()",
           "OPTION_TAN"
@@ -1300,7 +1300,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "power(2)",
           "OPTION_POW2"
-        ],  
+        ],
         [
           "exp()",
           "OPTION_EXP"
@@ -1308,7 +1308,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(2)",
           "OPTION_LOG2"
-        ], 
+        ],
         [
           "ln()",
           "OPTION_LN"
@@ -1316,7 +1316,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(10)",
           "OPTION_LOG"
-        ],      
+        ],
         [
           "atan()",
           "OPTION_ATAN"
@@ -1324,7 +1324,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "atan2()",
           "OPTION_ATAN2"
-        ],  
+        ],
         [
           "sin()",
           "OPTION_SIN"
@@ -1332,7 +1332,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "cos()",
           "OPTION_COS"
-        ],   
+        ],
         [
           "limits",
           "OPTION_LIM"
@@ -1340,7 +1340,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "abs()",
           "OPTION_ABS"
-        ],  
+        ],
         [
           "ceil()",
           "OPTION_CEIL"
@@ -1348,11 +1348,11 @@ Blockly.defineBlocksWithJsonArray([
         [
           "floor()",
           "OPTION_FLOOR"
-        ],          
+        ],
         [
           "mod()",
           "OPTION_MOD"
-        ]            
+        ]
       ]
     },
     {
@@ -1391,7 +1391,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "multiplies",
           "OPTION_MUL"
-        ],        
+        ],
         [
           "divides",
           "OPTION_DIV"
@@ -1403,7 +1403,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "integrates",
           "OPTION_INTEGRATE"
-        ],        
+        ],
         [
           "derives",
           "OPTION_DERIVE"
@@ -1411,7 +1411,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "filters (PID)",
           "OPTION_PID"
-        ],        
+        ],
         [
           "1/sqrt()",
           "OPTION_INVSQRT"
@@ -1419,7 +1419,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "sqrt()",
           "OPTION_SQRT"
-        ],        
+        ],
         [
           "tan()",
           "OPTION_TAN"
@@ -1435,7 +1435,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "power(2)",
           "OPTION_POW2"
-        ],  
+        ],
         [
           "exp()",
           "OPTION_EXP"
@@ -1443,7 +1443,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(2)",
           "OPTION_LOG2"
-        ], 
+        ],
         [
           "ln()",
           "OPTION_LN"
@@ -1451,7 +1451,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "log(10)",
           "OPTION_LOG"
-        ],      
+        ],
         [
           "atan()",
           "OPTION_ATAN"
@@ -1459,7 +1459,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "atan2()",
           "OPTION_ATAN2"
-        ],  
+        ],
         [
           "sin()",
           "OPTION_SIN"
@@ -1467,7 +1467,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "cos()",
           "OPTION_COS"
-        ],   
+        ],
         [
           "limits",
           "OPTION_LIM"
@@ -1475,7 +1475,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "abs()",
           "OPTION_ABS"
-        ],  
+        ],
         [
           "ceil()",
           "OPTION_CEIL"
@@ -1483,11 +1483,11 @@ Blockly.defineBlocksWithJsonArray([
         [
           "floor()",
           "OPTION_FLOOR"
-        ],          
+        ],
         [
           "mod()",
           "OPTION_MOD"
-        ]            
+        ]
       ]
     },
     {
@@ -1516,11 +1516,11 @@ Blockly.defineBlocksWithJsonArray([
  * @package
  */
 Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN = {
-  operation_: 'OPTION_NEG',    
+  operation_: 'OPTION_NEG',
   secondInput_: false,
   configInput_: false,
   customDefaults_: false,
-  
+
   /**
    * Create XML to represent whether the 'Defaults to:' input should be present.
    * @return {Element} XML storage element.
@@ -1531,15 +1531,15 @@ Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN = {
     if (this.customDefaults_ || this.secondInput_) {
         container = document.createElement('mutation');
         container.setAttribute('operation', this.operation_);
-            
+
         if (this.secondInput_) {
             container.setAttribute('secondInput', true);
         }
-        
+
         if (this.configInput_) {
             container.setAttribute('configInput', true);
         }
-        
+
         if (this.customDefaults_) {
             container.setAttribute('customDefaults', true);
         }
@@ -1564,43 +1564,43 @@ Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN = {
    * Populate mutator's workspace by decomposing original block.
    * @param {!Blockly.Workspace} workspace mutator's workspace.
    * @return {!Blockly.Block} root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
   decompose: function(workspace) {
       var topBlock = workspace.newBlock(this.type + '_base');
-      topBlock.initSvg();  
-      
+      topBlock.initSvg();
+
       // copy current settings of underlying block
       if (this.type == 'orion_configure_transformer_mutable') {
           topBlock.getField('BLOCK_ID').setValue(this.getField('BLOCK_ID').getValue());
           topBlock.getField('BLOCK_ID').EDITABLE = false;
       }
-      topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());  
+      topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());
       topBlock.getField('TYPE').EDITABLE = false;
-      
+
       // connect subblock(s), if present
       if (this.customDefaults_) {
-        var connection = topBlock.getFirstStatementConnection();          
+        var connection = topBlock.getFirstStatementConnection();
         var subBlock = workspace.newBlock('orion_custom_defaults_mutable_option');
         subBlock.initSvg();
         connection.connect(subBlock.previousConnection);
       }
-      
+
       return topBlock;
   },
   /**
    * Save mutator dialog's content to original block.
    * @param {!Blockly.Block} topBlock Root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
-  compose: function(topBlock) {    
+  compose: function(topBlock) {
       this.customDefaults_ = (topBlock.getFirstStatementConnection().targetBlock() != null);
-      
+
       if (this.type == 'orion_configure_transformer_mutable') {
           this.getField('BLOCK_ID').setValue(topBlock.getField('BLOCK_ID').getValue());
       }
       this.getField('TYPE').setValue(topBlock.getField('TYPE').getValue());
-      
+
       this.updateShape_();  // update original block in underlying workspace
   },
   /**
@@ -1615,7 +1615,7 @@ Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN = {
     var configInputConnection = null;
     var customDefaultsInputExists = this.getInput('CUSTOM_DEFAULTS');
     var customDefaultsInputConnection = null;
-    
+
     // remove inputs but save connections
     if (secondInputExists) {
         secondInputConnection = secondInputExists.connection.targetConnection;
@@ -1644,17 +1644,17 @@ Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN = {
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField('Configuration:');
         if (configInputConnection) {
-            if (configInputConnection.checkType_(this.getInput('CONFIG_INPUT').connection)) {            
-                Blockly.Mutator.reconnect(configInputConnection, this, 'CONFIG_INPUT');      
+            if (configInputConnection.checkType_(this.getInput('CONFIG_INPUT').connection)) {
+                Blockly.Mutator.reconnect(configInputConnection, this, 'CONFIG_INPUT');
             }
         }
     }
-    if (this.customDefaults_) {        
+    if (this.customDefaults_) {
         this.appendValueInput('CUSTOM_DEFAULTS')
             .setCheck('Defaults')
             .setAlign(Blockly.ALIGN_RIGHT)
             .appendField('Defaults:');
-        Blockly.Mutator.reconnect(customDefaultsInputConnection, this, 'CUSTOM_DEFAULTS');      
+        Blockly.Mutator.reconnect(customDefaultsInputConnection, this, 'CUSTOM_DEFAULTS');
     }
   }
 };
@@ -1671,12 +1671,12 @@ Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_EXTENSION = function() {
     this.sourceBlock_.configInput_ = (transformer_map.get(option)[5] > 0);
     this.sourceBlock_.operation_ = option;
     this.sourceBlock_.updateShape_();
-  });    
+  });
 }
 
 Blockly.Extensions.registerMutator('orion_configure_transformer_mutator',
     Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_MIXIN,
-    Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_EXTENSION, 
+    Blockly.Constants.oRIOn.TRANSFORMER_MUTATOR_EXTENSION,
     ['orion_custom_defaults_mutable_option']);
 
 /**
@@ -1686,13 +1686,13 @@ Blockly.Extensions.registerMutator('orion_configure_transformer_mutator',
  */
 Blockly.Extensions.register('orion_configure_transformer_extension',
     function() {
-        var field = this.getField('BLOCK_ID');        
+        var field = this.getField('BLOCK_ID');
         field.EDITABLE = false;
         if (this.workspace) {
-            field.setValue(getNextFreeID(this.workspace, block_type.TRANSFORMER));           
+            field.setValue(getNextFreeID(this.workspace, block_type.TRANSFORMER));
         }
     }
-); 
+);
 
 
 //---------------//
@@ -1733,7 +1733,7 @@ Blockly.defineBlocksWithJsonArray([
       "min": 1,
       "max": 256,
       "precision": 1
-    },  
+    },
     {
       "type": "field_dropdown",
       "name": "TYPE",
@@ -1777,7 +1777,7 @@ Blockly.defineBlocksWithJsonArray([
   "tooltip": "oRIOn output-to-pin block",
   "helpUrl": "",
   "mutator": "orion_configure_output_mutator",
-  "extensions": ["orion_configure_output_extension"]  
+  "extensions": ["orion_configure_output_extension"]
 },
 {
   "type": "orion_configure_output_to_pin_mutable_base",
@@ -1790,7 +1790,7 @@ Blockly.defineBlocksWithJsonArray([
       "min": 1,
       "max": 256,
       "precision": 1
-    },  
+    },
     {
       "type": "field_dropdown",
       "name": "TYPE",
@@ -1840,7 +1840,7 @@ Blockly.defineBlocksWithJsonArray([
 }
 ]);
 
-    
+
 /**
  * Mixin for mutator functions in the 'orion_output_mutator' extension.
  * @mixin
@@ -1877,38 +1877,38 @@ Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN = {
    * Populate mutator's workspace by decomposing original block.
    * @param {!Blockly.Workspace} workspace mutator's workspace.
    * @return {!Blockly.Block} root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
   decompose: function(workspace) {
       var topBlock = workspace.newBlock(this.type + '_base');
-      topBlock.initSvg();  
+      topBlock.initSvg();
 
-      // copy current settings of underlying block      
+      // copy current settings of underlying block
       if (this.type == 'orion_configure_output_mutable') {
-          topBlock.getField('BLOCK_ID').setValue(this.getField('BLOCK_ID').getValue());    
+          topBlock.getField('BLOCK_ID').setValue(this.getField('BLOCK_ID').getValue());
           topBlock.getField('BLOCK_ID').EDITABLE = false;
       }
       else {
           topBlock.getField('BLOCK_ID').setValue(this.getField('BLOCK_ID').getValue());
-          topBlock.getField('BLOCK_ID').EDITABLE = false;          
+          topBlock.getField('BLOCK_ID').EDITABLE = false;
           topBlock.getField('TYPE').setValue(this.getField('TYPE').getValue());
           topBlock.getField('PORT_ID').setValue(this.getField('PORT_ID').getValue());
           topBlock.getField('PIN_ID').setValue(this.getField('PIN_ID').getValue());
       }
-      
+
       if (this.customDefaults_) {
-        var connection = topBlock.getFirstStatementConnection();          
+        var connection = topBlock.getFirstStatementConnection();
         var subBlock = workspace.newBlock('orion_custom_defaults_mutable_option');
         subBlock.initSvg();
         connection.connect(subBlock.previousConnection);
       }
-      
+
       return topBlock;
   },
   /**
    * Save mutator dialog's content to original block.
    * @param {!Blockly.Block} topBlock Root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
   compose: function(topBlock) {
       this.customDefaults_ = (topBlock.getFirstStatementConnection().targetBlock() != null);
@@ -1916,7 +1916,7 @@ Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN = {
         this.getField('BLOCK_ID').setValue(topBlock.getField('BLOCK_ID').getValue());
       }
       else {
-        this.getField('BLOCK_ID').setValue(topBlock.getField('BLOCK_ID').getValue());          
+        this.getField('BLOCK_ID').setValue(topBlock.getField('BLOCK_ID').getValue());
         this.getField('TYPE').setValue(topBlock.getField('TYPE').getValue());
         this.getField('PORT_ID').setValue(topBlock.getField('PORT_ID').getValue());
         this.getField('PIN_ID').setValue(topBlock.getField('PIN_ID').getValue());
@@ -1934,20 +1934,20 @@ Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN = {
       if (!inputExists) {
         this.appendValueInput('CUSTOM_DEFAULTS')
             .setCheck('Defaults')
-            .setAlign(Blockly.ALIGN_RIGHT)            
+            .setAlign(Blockly.ALIGN_RIGHT)
             .appendField('Defaults:');
       }
     } else if (inputExists) {
-      this.removeInput('CUSTOM_DEFAULTS');        
+      this.removeInput('CUSTOM_DEFAULTS');
     }
   }
-/*  
+/*
   onchange: function(event) {
       if (event.type == Blockly.Events.BlockCreate) {
-          
+
       }
       else if (event.type == Blockly.Events.DELETE) {
-          
+
       }
   }
 */
@@ -1961,10 +1961,10 @@ Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN = {
 Blockly.Constants.oRIOn.OUTPUT_MUTATOR_EXTENSION = function() {
     var field = this.getField('BLOCK_ID');
     field.EDITABLE = false;
-    
+
     var block_id = this.workspace.getBlocksByType('orion_configure_output_mutable').length;
     block_id += this.workspace.getBlocksByType('orion_configure_output_to_pin_mutable').length;
-    
+
     field.setValue(blocks_id);  // for some reason, 1 additional block is placed, so no +1 here
 }
 
@@ -1972,7 +1972,7 @@ Blockly.Extensions.registerMutator('orion_configure_output_mutator',
     Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN,
     null,
     ['orion_custom_defaults_mutable_option']);
-    	
+
 /**
  * Alternative option to above Blockly.Constants.oRIOn.OUTPUT_TO_PIN_MUTATOR_EXTENSION.
  * Called on block creation.
@@ -1980,23 +1980,23 @@ Blockly.Extensions.registerMutator('orion_configure_output_mutator',
  */
 Blockly.Extensions.register('orion_configure_output_extension',
     function() {
-        var field = this.getField('BLOCK_ID');        
+        var field = this.getField('BLOCK_ID');
         field.EDITABLE = false;
-        
+
         if (this.workspace == demoWorkspace) {
-            field.setValue(getNextFreeID(this.workspace, block_type.OUTPUT));           
+            field.setValue(getNextFreeID(this.workspace, block_type.OUTPUT));
         }
         else {
             field.setValue(1);
         }
     }
-);       
-    
+);
+
 
 //----------------//
 // NUMERIC BLOCKS //
 //----------------//
-    
+
 Blockly.defineBlocksWithJsonArray([
 {
   "type": "orion_constant",
@@ -2044,7 +2044,7 @@ Blockly.defineBlocksWithJsonArray([
         [
           "enabled",
           "OPTION_YES"
-        ],      
+        ],
         [
           "disabled",
           "OPTION_NO"
@@ -2105,14 +2105,14 @@ Blockly.defineBlocksWithJsonArray([
   "tooltip": "Range",
   "helpUrl": ""
 }
-]);   
-    
-    
-    
+]);
+
+
+
 //--------------//
 // LASSO BLOCKS //
-//--------------//    
-    
+//--------------//
+
 Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_init",
@@ -2147,12 +2147,12 @@ Blockly.defineBlocksWithJsonArray([
     },
     {
       "type": "input_dummy"
-    },       
+    },
     {
       "type": "input_statement",
       "name": "STATEMENTS",
       "check": "lasso"
-    },          
+    },
     {
       "type": "field_dropdown",
       "name": "DYNASTROBE",
@@ -2166,13 +2166,13 @@ Blockly.defineBlocksWithJsonArray([
           "OPTION_ON"
         ]
       ]
-    }     
+    }
   ],
   "colour": 230,
   "tooltip": "lasso init",
   "helpUrl": "",
   "extensions": ["lasso_dynastrobe_extension"]
-},    
+},
 {
   "type": "lasso_register_datacell_mutable",
   "message0": "Register %1 datacell %2 as %3 x %4 and %5",
@@ -2277,11 +2277,11 @@ Blockly.defineBlocksWithJsonArray([
   "args0": [
     {
       "type": "input_dummy"
-    },    
+    },
     {
       "type": "input_statement",
       "name": "STATEMENTS"
-    }   
+    }
   ],
   "previousStatement": "lasso",
   "nextStatement": "lasso",
@@ -2340,7 +2340,7 @@ Blockly.defineBlocksWithJsonArray([
   "helpUrl": ""
 }
 ]);
-  
+
 
 /**
  * Extension to set validator function for setting global var "dynastrobe".
@@ -2350,17 +2350,17 @@ Blockly.defineBlocksWithJsonArray([
 Blockly.Extensions.register('lasso_dynastrobe_extension',
     function () {
         this.getField('DYNASTROBE').setValidator(function(option) {
-            if (this.sourceBlock_.workspace) { 
+            if (this.sourceBlock_.workspace) {
                 dynastrobe = (option == 'OPTION_ON');
                 if (dynastrobe) {   // enable 'lasso_custom_period_mutable_option'
-                
+
                 }
                 //console.log(dynastrobe);
             }
         });
     }
-);  
-  
+);
+
 
 /**
  * Mixin for mutator functions in the 'lasso_register_datacell_mutable' extension.
@@ -2370,7 +2370,7 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
  */
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   customProperties_: [null, null],
-  
+
   /**
    * Create XML to represent whether extra features should be present.
    * @return {Element} XML storage element.
@@ -2378,7 +2378,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   mutationToDom: function() {
     var container = null;
-    
+
     for (let i = 0; i < 2; i++) {
         if (this.customProperties_[i] !== null) {
             if (container === null) {
@@ -2387,7 +2387,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
             container.setAttribute('customProperty' + String(i), this.customProperties_[i]);
         }
     }
-    
+
     return container;
   },
   /**
@@ -2399,53 +2399,91 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
     for (let i = 0; i < 2; i++) {
         this.customProperties_[i] = xmlElement.getAttribute('customProperty' + String(i));
     }
-    
+
     this.updateShape_();
   },
   /**
-   * Populate mutator's workspace by decomposing original block.
+   * Populate mutator's workspace by decomposing original block (called once on opening mutator dialog).
    * @param {!Blockly.Workspace} workspace mutator's workspace.
    * @return {!Blockly.Block} root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
-  decompose: function(workspace) {
+  decompose: function(workspace) {      
       var topBlock = workspace.newBlock(this.type + '_base');
-      topBlock.initSvg();      
-      
+      topBlock.initSvg();
+
       var connection = topBlock.getInput('STATEMENTS').connection;
       var subBlock;
-      
+      var duplicate;
+
       // connect subblock(s), if present
       for (let i = 0; i < 2; i++) {
           if (this.customProperties_[i] !== null) {
-              subBlock = workspace.newBlock(this.customProperties_[i]);
-              subBlock.initSvg();
-              connection.connect(subBlock.previousConnection);
-              connection = subBlock.nextConnection;
+            subBlock = workspace.newBlock(this.customProperties_[i]);
+            if (subBlock.disabled === true) {
+                subBlock.dispose(false, true);
+            }
+            else {
+                subBlock.initSvg();
+                if (i == 1) {
+                    subBlock.setNextStatement(false);
+                }
+                connection.connect(subBlock.previousConnection);
+                connection = subBlock.nextConnection;
+            }
           }
-      }    
-      
+      }
+
       return topBlock;
   },
   /**
-   * Save mutator dialog's content to original block.
+   * Save mutator dialog's content to original block (called on change to mutator workspace).
    * @param {!Blockly.Block} topBlock Root block in mutator.
-   * @this Blockly.Block   
+   * @this Blockly.Block
    */
-  compose: function(topBlock) {    
+  compose: function(topBlock) {
       var target = topBlock.getInput('STATEMENTS').connection.targetBlock();
+      var duplicate;
+      var next_target;
+      var prev_target;
       
-      // save connected blocks in the right order
+      // save connected blocks in the right order and remove duplicates
       for (let i = 0; i < 2; i++) {
         if (target !== null) {
-            this.customProperties_[i] = target.type;         
-            target = target.getNextBlock();
+            this.customProperties_[i] = target.type;
+            
+            // check for duplicates
+            duplicate = false;
+            for (let j = 0; j < i; j++) {
+                duplicate = (this.customProperties_[i] == this.customProperties_[j]);
+            }
+            
+            // if target is a duplicate, remove it
+            if (duplicate) {
+                //console.log('Duplicate');
+                target.dispose(true, true); // heal connections, animate disposal
+                break;
+            }
+            else {
+                next_target = target.getNextBlock();                
+                
+                if (i == 1) {
+                    if (next_target !== null) {
+                        target.nextConnection.disconnect()
+                        next_target.dispose(false, true);
+                        next_target = null;
+                    }
+                    target.setNextStatement(false);
+                }
+                
+                target = next_target;
+            }
         }
         else {
             this.customProperties_[i] = null;
         }
       }
-      
+
       this.updateShape_();  // update original block in underlying workspace
   },
   /**
@@ -2460,7 +2498,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
     }
 
     var input = null;
-    
+
     // reinstall inputs and reconnect
     for (let i = 0; i < 2; i++) {
         if (this.customProperties_[i] !== null) {
@@ -2471,27 +2509,27 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
             switch (this.customProperties_[i]) {
                 case 'lasso_custom_callback_mutable_option' : {
                     input.appendField('Callback:')
-                         .appendField(new Blockly.FieldTextInput('yourCallback'))                    
+                         .appendField(new Blockly.FieldTextInput('yourCallback'))
                     break;
                 }
                 case 'lasso_custom_period_mutable_option' : {
                     input.appendField('Tick period:')
-                         .appendField(new Blockly.FieldNumber(1,1,'inf',1));                      
+                         .appendField(new Blockly.FieldNumber(1,1,'inf',1));
                     break;
                 }
                 default : {}
             }
         }
-    }       
+    }
   }
 };
 
 Blockly.Extensions.registerMutator('lasso_register_datacell_mutator',
     Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN,
-    null, 
+    null,
     ['lasso_custom_callback_mutable_option', 'lasso_custom_period_mutable_option']);
-    
-    
+
+
 //----------------//
 // MUTATOR BLOCKS //
 //----------------//
@@ -2511,8 +2549,8 @@ Blockly.defineBlocksWithJsonArray([
   "type": "lasso_custom_callback_mutable_option",
   "message0": "Custom callback",
   "inputsInline": true,
-  "previousStatement": null, 
-  "nextStatement": null,    
+  "previousStatement": null,
+  "nextStatement": null,
   "colour": 195,
   "tooltip": "Custom callback",
   "helpUrl": ""
@@ -2522,13 +2560,24 @@ Blockly.defineBlocksWithJsonArray([
   "message0": "Custom tick period",
   "inputsInline": true,
   "previousStatement": null,
-  "nextStatement": null,      
+  "nextStatement": null,
   "colour": 195,
   "tooltip": "Custom tick period",
-  "helpUrl": ""
+  "helpUrl": "",
+  "extensions": ["lasso_period_mutable_extension"]
 }
-]);    
+]);
 
+/**
+ * Extension to disable block (in mutator toolbox) if "dynastrobe" is not true.
+ * Called once on block creation.
+ * @this Blockly.Block
+ */
+Blockly.Extensions.register('lasso_period_mutable_extension',
+    function () {
+        this.setDisabled(dynastrobe == false);
+    }
+);
 
 /**
  * Extension to set validator function that checks the value of a new block ID.
@@ -2538,40 +2587,40 @@ Blockly.defineBlocksWithJsonArray([
 Blockly.Extensions.register('orion_extension',
     function () {
         this.getField('BLOCK_ID').setValidator(function(option) {
-            if (this.sourceBlock_.workspace) { 
-                var max_block_id = getNextFreeID(this.sourceBlock_.workspace, block_type_map.get(this.sourceBlock_.type));   
+            if (this.sourceBlock_.workspace) {
+                var max_block_id = getNextFreeID(this.sourceBlock_.workspace, block_type_map.get(this.sourceBlock_.type));
                 if (option > max_block_id) return max_block_id;
             }
         });
     }
-);   
-    
-   
+);
+
+
 Blockly.Constants.oRIOn.CLEAN_IDS_ON_DELETE = function(event) {
-    // at this time, blocks have already been deleted from workspace     
-    var workspace = event.getEventWorkspace_();     
+    // at this time, blocks have already been deleted from workspace
+    var workspace = event.getEventWorkspace_();
     var id_map = [];
-    
-    for (let block_types of generateBlockTypes()) {        
-        
+
+    for (let block_types of generateBlockTypes()) {
+
         // get all blocks with auto-assigned block_ids concerned by deletion
         var blocks = [];
         for (let t of block_types[0]) {
             blocks = blocks.concat(workspace.getBlocksByType(t));
         }
-        
+
         // correct all auto-assigned block_ids concerned by deletion
-        id_map = [];        
+        id_map = [];
         if (blocks) {
-                        
+
             // determine list of used output IDs
             var id_list = [];
-            for (let b of blocks) {   
+            for (let b of blocks) {
                 id_list.push(b.getField('BLOCK_ID').getValue());
             }
             id_list.sort(function(a, b){ return a - b; });  // sort numerically
-            //alert('Remaining IDs: ' + id_list);        
-            
+            //alert('Remaining IDs: ' + id_list);
+
             // correct remaining IDs
             for (let b of blocks) {
                 var reduce = 0;
@@ -2582,9 +2631,9 @@ Blockly.Constants.oRIOn.CLEAN_IDS_ON_DELETE = function(event) {
                 }
                 b.getField('BLOCK_ID').setValue(k + 1);
                 id_map.push([max_id, k + 1]);
-            }    	
+            }
         }
-        
+
         // correct also all user-assigned block_ids
         for (let t of block_types[1]) {
             blocks = workspace.getBlocksByType(t);
@@ -2601,8 +2650,8 @@ Blockly.Constants.oRIOn.CLEAN_IDS_ON_DELETE = function(event) {
                     if (!mapped) {
                         b.getField('BLOCK_ID').setValue(0);
                     }
-                }                
+                }
             }
-        }	
+        }
     }
 }
