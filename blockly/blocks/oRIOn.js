@@ -2117,7 +2117,7 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_init",
   "lastDummyAlign0": "RIGHT",
-  "message0": " Lasso host on target %1 %2 %3 Strobe: %4",
+  "message0": " Lasso host on target %1 %2 %3 Strobe: %4 %5 Command/response CRC %6 %7 Strobe CRC %8",
   "args0": [
     {
       "type": "field_dropdown",
@@ -2163,6 +2163,42 @@ Blockly.defineBlocksWithJsonArray([
         ],
         [
           "dynamic",
+          "OPTION_ON"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy",
+      "align": "RIGHT"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "COMMANDCRC",
+      "options": [
+        [
+          "Off",
+          "OPTION_OFF"
+        ],
+        [
+          "On",
+          "OPTION_ON"
+        ]
+      ]
+    },
+    {
+      "type": "input_dummy",
+      "align": "RIGHT"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "STROBECRC",
+      "options": [
+        [
+          "Off",
+          "OPTION_OFF"
+        ],
+        [
+          "On",
           "OPTION_ON"
         ]
       ]
@@ -2290,7 +2326,7 @@ Blockly.defineBlocksWithJsonArray([
   "helpUrl": ""
 },
 {
-  "type": "lasso_register_orion_wire",
+  "type": "lasso_register_orion_wire_mutable",
   "lastDummyAlign0": "RIGHT",
   "message0": "Register %1 oRIOn wire %2 and %3",
   "args0": [
@@ -2337,8 +2373,27 @@ Blockly.defineBlocksWithJsonArray([
   "nextStatement": "lasso",
   "colour": 100,
   "tooltip": "lasso register oRIOn wire",
+  "helpUrl": "",
+  "mutator": "lasso_register_datacell_mutator",
+},
+{
+  "type": "lasso_register_orion_wire_mutable_base",
+  "message0": "Add custom datacell properties? %1 %2",
+  "args0": [
+    {
+      "type": "input_dummy"
+    },
+    {
+      "type": "input_statement",
+      "name": "STATEMENTS"
+    }
+  ],
+  "previousStatement": "lasso",
+  "nextStatement": "lasso",
+  "colour": 100,
+  "tooltip": "lasso register oRIOn wire",
   "helpUrl": ""
-}
+},
 ]);
 
 
@@ -2352,10 +2407,27 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
         this.getField('DYNASTROBE').setValidator(function(option) {
             if (this.sourceBlock_.workspace) {
                 dynastrobe = (option == 'OPTION_ON');
-                if (dynastrobe) {   // enable 'lasso_custom_period_mutable_option'
-
-                }
                 //console.log(dynastrobe);
+                
+                // remove fields 'fieldID1' and 'fieldID2' from input 'CUSTOM_INPUT', if available
+                if (dynastrobe === false) {
+                    var connection = this.sourceBlock_.getFirstStatementConnection();
+                    var target = null;
+                    if (connection !== null) {
+                        target = connection.targetBlock();
+                    }
+                    
+                    while (target !== null) {
+                        let input = target.getInput('CUSTOM_INPUT');
+                        if (input !== null) {
+                            input.removeField('fieldID1');
+                            input.removeField('fieldID2');
+                            //console.log('Found fields');
+                        }
+                        target = target.getNextBlock();
+                    }
+                    
+                }
             }
         });
     }
@@ -2513,8 +2585,8 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
                     break;
                 }
                 case 'lasso_custom_period_mutable_option' : {
-                    input.appendField('Tick period:')
-                         .appendField(new Blockly.FieldNumber(1,1,'inf',1));
+                    input.appendField('Tick period:', 'fieldID1')
+                         .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
                     break;
                 }
                 default : {}

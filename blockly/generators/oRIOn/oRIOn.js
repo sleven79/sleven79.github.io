@@ -784,7 +784,7 @@ Blockly.JavaScript['lasso_register_datacell_mutable'] = function(block) {
     return "lasso_hostRegisterDataCell(" + type + access + enabled + ", " + num + ", &" + variable + ", \"" + variable + "\", \"\"" + callback + ")\r\n";
 };
 
-Blockly.JavaScript['lasso_register_orion_wire'] = function(block) {
+Blockly.JavaScript['lasso_register_orion_wire_mutable'] = function(block) {
     // ---------------------
     // block type: STATEMENT
     // ---------------------
