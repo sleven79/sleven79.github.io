@@ -1856,11 +1856,14 @@ Blockly.Constants.oRIOn.OUTPUT_MUTATOR_MIXIN = {
    */
   mutationToDom: function() {
     var container = null;
+    
+    //console.log('mutationToDom');
+    //console.log(this.customDefaults_);
+    
     if (this.customDefaults_) {
         container = document.createElement('mutation');
         container.setAttribute('customDefaults', true);
     }
-    //alert('MutationToDom: ' + (container != null));
     return container;
   },
   /**
@@ -2419,9 +2422,18 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
                     
                     while (target !== null) {
                         let input = target.getInput('CUSTOM_INPUT');
-                        if (input !== null) {
+                        if ((input !== null) && (target.getField('fieldID1') !== null)) {
                             input.removeField('fieldID1');
                             input.removeField('fieldID2');
+                                
+                            if (target.customProperty0_ == 'lasso_custom_period_mutable_option') {
+                                target.customProperty0_ = null;
+                            }
+                            else
+                            if (target.customProperty1_ == 'lasso_custom_period_mutable_option') {
+                                target.customProperty1_ = null;
+                            }
+                            
                             //console.log('Found fields');
                         }
                         target = target.getNextBlock();
@@ -2441,37 +2453,44 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
  * @package
  */
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
-  customProperties_: [null, null],
+  customProperty0_: null,  // must use value variables, not objects, for mixin to work!
+  customProperty1_: null,
 
   /**
    * Create XML to represent whether extra features should be present.
+   * Called when:
+   * - toolbox flyout opens and block is constructed in flyout
+   * - dragging block to workspace
+   * - mutator toolbox opens
+   * - dragging block to mutator workspace
    * @return {Element} XML storage element.
    * @this Blockly.Block
    */
   mutationToDom: function() {
     var container = null;
 
-    for (let i = 0; i < 2; i++) {
-        if (this.customProperties_[i] !== null) {
-            if (container === null) {
-                container = document.createElement('mutation');
-            }             
-            container.setAttribute('customProperty' + String(i), this.customProperties_[i]);
-        }
+    console.log('mutationToDom');
+    
+    if ((this.customProperty0_ !== null) || (this.customProperty1_ !== null)) {
+        container = document.createElement('mutation');        
+        if (this.customProperty0_ !== null) container.setAttribute('customProperty0', this.customProperty0_);
+        if (this.customProperty1_ !== null) container.setAttribute('customProperty1', this.customProperty1_);
     }
-
+    
     return container;
   },
   /**
-   * Parse XML to restore the extra features.
+   * Parse XML to restore the extra features. Called when a <mutation> tag exists in block's XML.
    * @param {!Element} xmlElement XML storage element.
    * @this Blockly.Block
    */
   domToMutation: function(xmlElement) {
-    for (let i = 0; i < 2; i++) {
-        this.customProperties_[i] = xmlElement.getAttribute('customProperty' + String(i));
-    }
-
+      
+    console.log('domToMutation');
+      
+    this.customProperty0_ = xmlElement.getAttribute('customProperty0');
+    this.customProperty1_ = xmlElement.getAttribute('customProperty1');
+    
     this.updateShape_();
   },
   /**
@@ -2484,14 +2503,17 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var topBlock = workspace.newBlock(this.type + '_base');
       topBlock.initSvg();
 
+      var customProperties_ = [this.customProperty0_, this.customProperty1_];
       var connection = topBlock.getFirstStatementConnection();
       var subBlock;
       var duplicate;
 
+      console.log('decompose');
+      
       // connect subblock(s), if present
       for (let i = 0; i < 2; i++) {
-          if (this.customProperties_[i] !== null) {
-            subBlock = workspace.newBlock(this.customProperties_[i]);
+          if (customProperties_[i] !== null) {
+            subBlock = workspace.newBlock(customProperties_[i]);
             if (subBlock.disabled === true) {
                 subBlock.dispose(false, true);
             }
@@ -2509,50 +2531,47 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       return topBlock;
   },
   /**
-   * Save mutator dialog's content to original block (called on change to mutator workspace).
+   * Save mutator dialog's content to original block. Called on change to mutator workspace:
+   * - mutator toolbox opens
+   * - dragging block to mutator workspace
    * @param {!Blockly.Block} topBlock Root block in mutator.
    * @this Blockly.Block
    */
   compose: function(topBlock) {
       var target = topBlock.getFirstStatementConnection().targetBlock();
-      var duplicate;
       var next_target;
-      var prev_target;
+      
+      console.log('compose');
       
       // save connected blocks in the right order and remove duplicates
-      for (let i = 0; i < 2; i++) {
-        if (target === null) {
-            this.customProperties_[i] = null;
-            break;
-        }
-        this.customProperties_[i] = target.type;
+      if (target === null) {
+          this.customProperty0_ = null;
+          this.customProperty1_ = null;
+      }
+      else {
+          this.customProperty0_ = target.type;
+          this.customProperty1_ = null;
+          next_target = target.getNextBlock();
+          
+          if (next_target !== null) {
+            if (this.customProperty0_ == next_target.type) {
+                next_target.dispose(true, true);
+                next_target = target.getNextBlock();
+            }
 
-        // check for duplicates
-        duplicate = false;
-        for (let j = 0; j < i; j++) {
-            duplicate = (this.customProperties_[i] == this.customProperties_[j]);
-        }
-        
-        // if target is a duplicate, remove it
-        if (duplicate) {
-            //console.log('Duplicate');
-            target.dispose(true, true); // heal connections, animate disposal
-            break;
-        }
-        else {
-            next_target = target.getNextBlock();                
+            if (next_target !== null) {
+                target = next_target;
+                this.customProperty1_ = target.type;
+                next_target = target.getNextBlock();
             
-            if (i == 1) {
                 if (next_target !== null) {
                     target.nextConnection.disconnect()
                     next_target.dispose(false, true);
-                    next_target = null;
                 }
-                target.setNextStatement(false);
+                
+                target.setNextStatement(false);                    
             }
-            
-            target = next_target;
-        }
+          }
       }
 
       this.updateShape_();  // update original block in underlying workspace
@@ -2571,27 +2590,32 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
     var input = null;
 
     // reinstall inputs and reconnect
-    for (let i = 0; i < 2; i++) {
-        if (this.customProperties_[i] !== null) {
-            if (input === null) {
-                input = this.appendDummyInput('CUSTOM_INPUT')
-                            .setAlign(Blockly.ALIGN_RIGHT);
-            }
-            switch (this.customProperties_[i]) {
-                case 'lasso_custom_callback_mutable_option' : {
-                    input.appendField('Callback:')
-                         .appendField(new Blockly.FieldTextInput('yourCallback'))
-                    break;
-                }
-                case 'lasso_custom_period_mutable_option' : {
+    if (this.customProperty0_ !== null) {
+        input = this.appendDummyInput('CUSTOM_INPUT')
+                    .setAlign(Blockly.ALIGN_RIGHT);
+        switch (this.customProperty0_) {
+            case 'lasso_custom_callback_mutable_option' : {
+                input.appendField('Callback:')
+                     .appendField(new Blockly.FieldTextInput('yourCallback'))
+                if (this.customProperty1_ !== null) {
                     input.appendField('Tick period:', 'fieldID1')
-                         .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
-                    break;
+                        .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
                 }
-                default : {}
+                break;
             }
+            case 'lasso_custom_period_mutable_option' : {
+                input.appendField('Tick period:', 'fieldID1')
+                     .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
+                if (this.customProperty1_ !== null) {
+                    input.appendField('Callback:')
+                        .appendField(new Blockly.FieldTextInput('yourCallback'));
+                }
+                break;
+            }
+            default : {}
         }
     }
+    
   }
 };
 
@@ -2638,6 +2662,7 @@ Blockly.defineBlocksWithJsonArray([
   "extensions": ["lasso_period_mutable_extension"]
 }
 ]);
+
 
 /**
  * Extension to disable block (in mutator toolbox) if "dynastrobe" is not true.
