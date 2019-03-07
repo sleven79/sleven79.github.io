@@ -2455,7 +2455,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
         if (this.customProperties_[i] !== null) {
             if (container === null) {
                 container = document.createElement('mutation');
-            }
+            }             
             container.setAttribute('customProperty' + String(i), this.customProperties_[i]);
         }
     }
@@ -2484,7 +2484,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var topBlock = workspace.newBlock(this.type + '_base');
       topBlock.initSvg();
 
-      var connection = topBlock.getInput('STATEMENTS').connection;
+      var connection = topBlock.getFirstStatementConnection();
       var subBlock;
       var duplicate;
 
@@ -2514,45 +2514,44 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block
    */
   compose: function(topBlock) {
-      var target = topBlock.getInput('STATEMENTS').connection.targetBlock();
+      var target = topBlock.getFirstStatementConnection().targetBlock();
       var duplicate;
       var next_target;
       var prev_target;
       
       // save connected blocks in the right order and remove duplicates
       for (let i = 0; i < 2; i++) {
-        if (target !== null) {
-            this.customProperties_[i] = target.type;
-            
-            // check for duplicates
-            duplicate = false;
-            for (let j = 0; j < i; j++) {
-                duplicate = (this.customProperties_[i] == this.customProperties_[j]);
-            }
-            
-            // if target is a duplicate, remove it
-            if (duplicate) {
-                //console.log('Duplicate');
-                target.dispose(true, true); // heal connections, animate disposal
-                break;
-            }
-            else {
-                next_target = target.getNextBlock();                
-                
-                if (i == 1) {
-                    if (next_target !== null) {
-                        target.nextConnection.disconnect()
-                        next_target.dispose(false, true);
-                        next_target = null;
-                    }
-                    target.setNextStatement(false);
-                }
-                
-                target = next_target;
-            }
+        if (target === null) {
+            this.customProperties_[i] = null;
+            break;
+        }
+        this.customProperties_[i] = target.type;
+
+        // check for duplicates
+        duplicate = false;
+        for (let j = 0; j < i; j++) {
+            duplicate = (this.customProperties_[i] == this.customProperties_[j]);
+        }
+        
+        // if target is a duplicate, remove it
+        if (duplicate) {
+            //console.log('Duplicate');
+            target.dispose(true, true); // heal connections, animate disposal
+            break;
         }
         else {
-            this.customProperties_[i] = null;
+            next_target = target.getNextBlock();                
+            
+            if (i == 1) {
+                if (next_target !== null) {
+                    target.nextConnection.disconnect()
+                    next_target.dispose(false, true);
+                    next_target = null;
+                }
+                target.setNextStatement(false);
+            }
+            
+            target = next_target;
         }
       }
 
