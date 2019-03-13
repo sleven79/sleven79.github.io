@@ -739,17 +739,22 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     // ---------------------
     // block type: STATEMENT
     // ---------------------
-    // inputs: INPUT
-    // fields: TARGET
+    // inputs: STATEMENTS
+    // fields: TARGET, DYNASTROBE, COMMANDCRC, STROBECRC
     var target = block.getFieldValue('TARGET').split('_')[1];
+    var dynastrobe = (block.getFieldValue('DYNASTROBE') == 'OPTION_ON');   // not used for code generation
+    var crc = ( (block.getFieldValue('COMMANDCRC') == 'OPTION_ON') || (block.getFieldValue('STROBECRC') == 'OPTION_ON') );
     var statements = Blockly.JavaScript.statementToCode(block, 'STATEMENTS').split('\r\n');
     
     // default callbacks for lasso_hostRegisterCOM, lasso_hostRegisterDatacell, lasso_hostRegisterMEM
     var user_callbacks = ['while(1);', 'while(1);', 'while(1);'];
         
     var code = "//-------//\r\n// LASSO //\r\n//-------//\r\n\r\n";
-    code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target + ", NULL, NULL)) {\r\n    ";
-    code += user_callbacks[0] + "\r\n}\r\n\r\n";
+    code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target + ", NULL, NULL";
+    if (crc) {
+        code += ", &lasso_crcCallback_" + target;
+    }
+    code += ")) {\r\n    " + user_callbacks[0] + "\r\n}\r\n\r\n";
   
     for (let s of statements) {
         if (s != "") {
@@ -765,7 +770,7 @@ Blockly.JavaScript['lasso_register_datacell_mutable'] = function(block) {
     // block type: STATEMENT
     // ---------------------
     // inputs: none
-    // fields: ACCESS, VARIABLE, NUMBER, TYPE, ENABLED
+    // fields: ACCESS, VARIABLE, NUMBER, TYPE, ENABLED, FIELDID2, FIELDID4
     var access = (block.getFieldValue('ACCESS') == "OPTION_WRITEABLE" ? " | LASSO_DATACELL_WRITEABLE" : "");
     var variable = block.getFieldValue('VARIABLE');
     var num = block.getFieldValue('NUMBER');
@@ -776,12 +781,16 @@ Blockly.JavaScript['lasso_register_datacell_mutable'] = function(block) {
         case "OPTION_PERMANENT" : { enabled = " | LASSO_DATACELL_PERMANENT"; break; }
         default : { enabled = ""; }
     }
-    var callback = "";  
-    if (callback != "") {
-        callback = ', '.concat(callback);
+    var callback = ", NULL";  
+    if (block.getField('FIELDID2') !== null) {
+        callback = ", &".concat(block.getFieldValue('FIELDID2'));
     }
+    var tickperiod = "";
+    if (block.getField('FIELDID4') !== null) {
+        tickperiod = ", ".concat(block.getFieldValue('FIELDID4'));
+    }    
     
-    return "lasso_hostRegisterDataCell(" + type + access + enabled + ", " + num + ", &" + variable + ", \"" + variable + "\", \"\"" + callback + ")\r\n";
+    return "lasso_hostRegisterDataCell(" + type + access + enabled + ", " + num + ", &" + variable + ", \"" + variable + "\", \"\"" + callback + tickperiod + ")\r\n";
 };
 
 Blockly.JavaScript['lasso_register_orion_wire_mutable'] = function(block) {
@@ -789,7 +798,7 @@ Blockly.JavaScript['lasso_register_orion_wire_mutable'] = function(block) {
     // block type: STATEMENT
     // ---------------------
     // inputs: WIRE_ID
-    // fields: ACCESS, ENABLED
+    // fields: ACCESS, ENABLED, FIELDID2, FIELDID4
     var input = getCodeAndWireFrom(Blockly.JavaScript.valueToCode(block, 'WIRE_ID', Blockly.JavaScript.ORDER_NONE) || "");    
     var access = (block.getFieldValue('ACCESS') == "OPTION_WRITEABLE" ? " | LASSO_DATACELL_WRITEABLE" : "");
     var enabled; 
@@ -798,10 +807,14 @@ Blockly.JavaScript['lasso_register_orion_wire_mutable'] = function(block) {
         case "OPTION_PERMANENT" : { enabled = " | LASSO_DATACELL_PERMANENT"; break; }
         default : { enabled = ""; }
     }
-    var callback = "";  
-    if (callback != "") {
-        callback = ', '.concat(callback);
+    var callback = ", NULL";  
+    if (block.getField('FIELDID2') !== null) {
+        callback = ", &".concat(block.getFieldValue('FIELDID2'));
     }
+    var tickperiod = "";
+    if (block.getField('FIELDID4') !== null) {
+        tickperiod = ", ".concat(block.getFieldValue('FIELDID4'));
+    }  
     
     // begin building code from connected input
     var code = input[0];   
@@ -809,7 +822,7 @@ Blockly.JavaScript['lasso_register_orion_wire_mutable'] = function(block) {
     // extract wire from connected input
     var wire_variable = input[1];  
     
-    code += "lasso_hostRegisterDataCell(LASSO_FLOAT" + access + enabled + ", 1, &" + wire_variable + ", \"" + wire_variable + "\", \"\"" + callback + ")\r\n";
+    code += "lasso_hostRegisterDataCell(LASSO_FLOAT" + access + enabled + ", 1, &" + wire_variable + ", \"" + wire_variable + "\", \"\"" + callback + tickperiod + ")\r\n";
     
     return code;
 };

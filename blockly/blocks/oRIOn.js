@@ -2422,9 +2422,9 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
                     
                     while (target !== null) {
                         let input = target.getInput('CUSTOM_INPUT');
-                        if ((input !== null) && (target.getField('fieldID1') !== null)) {
-                            input.removeField('fieldID1');
-                            input.removeField('fieldID2');
+                        if ((input !== null) && (target.getField('FIELDID3') !== null)) {
+                            input.removeField('FIELDID3');
+                            input.removeField('FIELDID4');
                                 
                             if (target.customProperty0_ == 'lasso_custom_period_mutable_option') {
                                 target.customProperty0_ = null;
@@ -2455,7 +2455,8 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   customProperty0_: null,  // must use value variables, not objects, for mixin to work!
   customProperty1_: null,
-
+  customCallback_: "yourCallback",
+  customTickPeriod_: 1,    
   /**
    * Create XML to represent whether extra features should be present.
    * Called when:
@@ -2469,7 +2470,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   mutationToDom: function() {
     var container = null;
 
-    console.log('mutationToDom');
+    // console.log('mutationToDom');
     
     if ((this.customProperty0_ !== null) || (this.customProperty1_ !== null)) {
         container = document.createElement('mutation');        
@@ -2486,7 +2487,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   domToMutation: function(xmlElement) {
       
-    console.log('domToMutation');
+    // console.log('domToMutation');
       
     this.customProperty0_ = xmlElement.getAttribute('customProperty0');
     this.customProperty1_ = xmlElement.getAttribute('customProperty1');
@@ -2508,7 +2509,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var subBlock;
       var duplicate;
 
-      console.log('decompose');
+      // console.log('decompose');
       
       // connect subblock(s), if present
       for (let i = 0; i < 2; i++) {
@@ -2541,7 +2542,7 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var target = topBlock.getFirstStatementConnection().targetBlock();
       var next_target;
       
-      console.log('compose');
+      // console.log('compose');
       
       // save connected blocks in the right order and remove duplicates
       if (target === null) {
@@ -2584,6 +2585,12 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   updateShape_: function() {
     // remove input before restoring it
     if (this.getInput('CUSTOM_INPUT')) {
+        if (this.getField('FIELDID2')) {
+            this.customCallback_ = this.getFieldValue('FIELDID2');
+        }
+        if (this.getField('FIELDID4')) {
+            this.customTickPeriod_ = Number(this.getFieldValue('FIELDID4'));
+        }        
         this.removeInput('CUSTOM_INPUT');
     }
 
@@ -2595,20 +2602,20 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
                     .setAlign(Blockly.ALIGN_RIGHT);
         switch (this.customProperty0_) {
             case 'lasso_custom_callback_mutable_option' : {
-                input.appendField('Callback:')
-                     .appendField(new Blockly.FieldTextInput('yourCallback'))
+                input.appendField('Callback:', 'FIELDID1')
+                     .appendField(new Blockly.FieldTextInput(this.customCallback_), 'FIELDID2')
                 if (this.customProperty1_ !== null) {
-                    input.appendField('Tick period:', 'fieldID1')
-                        .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
+                    input.appendField('Tick period:', 'FIELDID3')
+                        .appendField(new Blockly.FieldNumber(this.customTickPeriod_, 1, 'inf', 1), 'FIELDID4');
                 }
                 break;
             }
             case 'lasso_custom_period_mutable_option' : {
-                input.appendField('Tick period:', 'fieldID1')
-                     .appendField(new Blockly.FieldNumber(1,1,'inf',1), 'fieldID2');
+                input.appendField('Tick period:', 'FIELDID3')
+                     .appendField(new Blockly.FieldNumber(this.customTickPeriod_, 1, 'inf', 1), 'FIELDID4');
                 if (this.customProperty1_ !== null) {
-                    input.appendField('Callback:')
-                        .appendField(new Blockly.FieldTextInput('yourCallback'));
+                    input.appendField('Callback:', 'FIELDID1')
+                        .appendField(new Blockly.FieldTextInput(this.customCallback_), 'FIELDID2');
                 }
                 break;
             }
