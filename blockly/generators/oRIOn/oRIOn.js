@@ -54,6 +54,8 @@ var transformer_config_dummy;
 var block_count;
 var block_id_to_wire_map;
 
+var enable_callbacks = (function() { var enable = false; return { set : function(e) { enable = e; return e; }, get : function() { return enable; } } })();
+
 
 function getPortID(numstr) {
     var port_id_num = Number(numstr);
@@ -740,29 +742,48 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     // block type: STATEMENT
     // ---------------------
     // inputs: STATEMENTS
-    // fields: TARGET, DYNASTROBE, COMMANDCRC, STROBECRC
+    // fields: TARGET, DYNASTROBE, CRC, CALLBACKS
     var target = block.getFieldValue('TARGET').split('_')[1];
     var dynastrobe = (block.getFieldValue('DYNASTROBE') == 'OPTION_ON');   // not used for code generation
-    var crc = ( (block.getFieldValue('COMMANDCRC') == 'OPTION_ON') || (block.getFieldValue('STROBECRC') == 'OPTION_ON') );
+    var crc = (block.getFieldValue('CRC') == 'OPTION_ON');
+    enable_callbacks.set(block.getFieldValue('CALLBACKS') == 'OPTION_ON');
+    var callbacks = [];
     var statements = Blockly.JavaScript.statementToCode(block, 'STATEMENTS').split('\r\n');
     
     // default callbacks for lasso_hostRegisterCOM, lasso_hostRegisterDatacell, lasso_hostRegisterMEM
     var user_callbacks = ['while(1);', 'while(1);', 'while(1);'];
         
-    var code = "//-------//\r\n// LASSO //\r\n//-------//\r\n\r\n";
+    var code = "//-------//\r\n// Lasso //\r\n//-------//\r\n\r\n";
     code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target + ", NULL, NULL";
     if (crc) {
         code += ", &lasso_crcCallback_" + target;
+        callbacks.push("int32_t crcCallback(uint8_t* buf, uint8_t cnt) {\r\n    /* your code here */\r\n}\r\n");
     }
     code += ")) {\r\n    " + user_callbacks[0] + "\r\n}\r\n\r\n";
   
     for (let s of statements) {
         if (s != "") {
             code += "if (" + s + ") {\r\n    " + user_callbacks[1] + "\r\n}\r\n\r\n";
+            let t = s.substring(s.indexOf('(') + 1).split(',');
+            let v = t[5].substring(2, t[5].length - 1);
+            if (v != "ULL") {
+                let w = t[0].split('|')[0].trim().split('_')[1].toLowerCase();            
+                if ((w != 'bool') && (w != 'char') && (w != 'float')) { 
+                    w += "_t";
+                }
+                callbacks.push("bool " + v + "(void* in) {\r\n    " + w + " val = *(" + w + ")in;\r\n\r\n    /* your code here */\r\n    /* return true if 'in' is acceptable */\r\n    return true;\r\n}\r\n");
+            }
         }
     }
+    
+    code = code.concat("if (lasso_hostRegisterMEM()) {\r\n    " + user_callbacks[2] + "\r\n}\r\n\r\n");
+    
+    if ((enable_callbacks.get()) && (callbacks.length > 0)) {
+        code += "//-----------------//\r\n// Lasso callbacks //\r\n//-----------------//\r\n\r\n";
+        code += callbacks.join();
+    }
   
-    return code.concat("if (lasso_hostRegisterMEM()) {\r\n    " + user_callbacks[2] + "\r\n}\r\n\r\n");
+    return code;
 };
 
 Blockly.JavaScript['lasso_register_datacell_mutable'] = function(block) {

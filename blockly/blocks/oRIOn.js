@@ -2120,7 +2120,7 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_init",
   "lastDummyAlign0": "RIGHT",
-  "message0": " Lasso host on target %1 %2 %3 Strobe: %4 %5 Command/response CRC %6 %7 Strobe CRC %8",
+  "message0": " Lasso host on target %1 %2 %3 Strobe: %4 %5 CRC generation: %6 %7 Callback generation: %8",
   "args0": [
     {
       "type": "field_dropdown",
@@ -2176,14 +2176,14 @@ Blockly.defineBlocksWithJsonArray([
     },
     {
       "type": "field_dropdown",
-      "name": "COMMANDCRC",
+      "name": "CRC",
       "options": [
         [
-          "Off",
+          "off",
           "OPTION_OFF"
         ],
         [
-          "On",
+          "on",
           "OPTION_ON"
         ]
       ]
@@ -2194,14 +2194,14 @@ Blockly.defineBlocksWithJsonArray([
     },
     {
       "type": "field_dropdown",
-      "name": "STROBECRC",
+      "name": "CALLBACKS",
       "options": [
         [
-          "Off",
+          "hide",
           "OPTION_OFF"
         ],
         [
-          "On",
+          "generate",
           "OPTION_ON"
         ]
       ]
