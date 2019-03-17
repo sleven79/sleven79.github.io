@@ -2214,8 +2214,26 @@ Blockly.defineBlocksWithJsonArray([
 },
 {
   "type": "lasso_register_datacell_mutable",
-  "message0": "Register %1 datacell %2 as %3 x %4 and %5",
+  "message0": "Register and %1: %2 datacell %3 as %4 x %5",
   "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "ENABLED",
+      "options": [
+        [
+          "include in strobe",
+          "OPTION_YES"
+        ],
+        [
+          "make permanent",
+          "OPTION_PERMANENT"
+        ],
+        [
+          "exclude from strobe",
+          "OPTION_NO"
+        ]
+      ]
+    },  
     {
       "type": "field_dropdown",
       "name": "ACCESS",
@@ -2233,7 +2251,7 @@ Blockly.defineBlocksWithJsonArray([
     {
       "type": "field_input",
       "name": "VARIABLE",
-      "text": "yourDatacellName"
+      "text": "myDatacell"
     },
     {
       "type": "field_number",
@@ -2283,24 +2301,6 @@ Blockly.defineBlocksWithJsonArray([
           "LASSO_FLOAT"
         ]
       ]
-    },
-    {
-      "type": "field_dropdown",
-      "name": "ENABLED",
-      "options": [
-        [
-          "include in strobe",
-          "OPTION_YES"
-        ],
-        [
-          "make permanent",
-          "OPTION_PERMANENT"
-        ],
-        [
-          "exclude from strobe",
-          "OPTION_NO"
-        ]
-      ]
     }
   ],
   "previousStatement": "lasso",
@@ -2331,27 +2331,8 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_register_orion_wire_mutable",
   "lastDummyAlign0": "RIGHT",
-  "message0": "Register %1 oRIOn wire %2 and %3",
+  "message0": "Register and %1: %2 oRIOn wire %3",
   "args0": [
-    {
-      "type": "field_dropdown",
-      "name": "ACCESS",
-      "options": [
-        [
-          "read-only",
-          "OPTION_READONLY"
-        ],
-        [
-          "writeable",
-          "OPTION_WRITEABLE"
-        ]
-      ]
-    },
-    {
-      "type": "input_value",
-      "name": "WIRE_ID",
-      "check": "Wire"
-    },
     {
       "type": "field_dropdown",
       "name": "ENABLED",
@@ -2369,9 +2350,29 @@ Blockly.defineBlocksWithJsonArray([
           "OPTION_NO"
         ]
       ]
+    },  
+    {
+      "type": "field_dropdown",
+      "name": "ACCESS",
+      "options": [
+        [
+          "read-only",
+          "OPTION_READONLY"
+        ],
+        [
+          "writeable",
+          "OPTION_WRITEABLE"
+        ]
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "WIRE_ID",
+      "check": "Wire",
+      "align": "RIGHT"
     }
-  ],
-  "inputsInline": true,
+  ], 
+  "inputsInline": false,  
   "previousStatement": "lasso",
   "nextStatement": "lasso",
   "colour": 100,
@@ -2455,8 +2456,13 @@ Blockly.Extensions.register('lasso_dynastrobe_extension',
 Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
   customProperty0_: null,  // must use value variables, not objects, for mixin to work!
   customProperty1_: null,
-  customCallback_: "yourCallback",
+  customProperty2_: null,
+  customProperty3_: null,
+  customMaxProperties_: 4,  
+  customCallback_: "onChange",
   customTickPeriod_: 1,    
+  customCellName_: "myName",
+  customCellUnit_: "myUnit",  
   /**
    * Create XML to represent whether extra features should be present.
    * Called when:
@@ -2469,13 +2475,21 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    */
   mutationToDom: function() {
     var container = null;
-
-    // console.log('mutationToDom');
     
-    if ((this.customProperty0_ !== null) || (this.customProperty1_ !== null)) {
+    // console.log('mutationToDom');
+  
+    let customProperties = [];
+    let customPropertiesExist = false;
+    for (let i = 0; i < this.customMaxProperties_; i++) {
+        customProperties.push(this["customProperty" + String(i) + "_"]);
+        if (customProperties[i] !== null) customPropertiesExist = true;
+    }
+    
+    if (customPropertiesExist) {
         container = document.createElement('mutation');        
-        if (this.customProperty0_ !== null) container.setAttribute('customProperty0', this.customProperty0_);
-        if (this.customProperty1_ !== null) container.setAttribute('customProperty1', this.customProperty1_);
+        for (let i = 0; i < this.customMaxProperties_; i++) {
+            if (customProperties[i] !== null) container.setAttribute('customProperty' + String(i), customProperties[i]);
+        }
     }
     
     return container;
@@ -2489,8 +2503,9 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       
     // console.log('domToMutation');
       
-    this.customProperty0_ = xmlElement.getAttribute('customProperty0');
-    this.customProperty1_ = xmlElement.getAttribute('customProperty1');
+    for (let i = 0; i < this.customMaxProperties_; i++) {
+        this["customProperty" + String(i) + "_"] = xmlElement.getAttribute("customProperty" + String(i));
+    }
     
     this.updateShape_();
   },
@@ -2504,23 +2519,26 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
       var topBlock = workspace.newBlock(this.type + '_base');
       topBlock.initSvg();
 
-      var customProperties_ = [this.customProperty0_, this.customProperty1_];
+      var customProperties = [];
+      for (let i = 0; i < this.customMaxProperties_; i++) {
+          customProperties.push(this["customProperty" + String(i) + "_"]);
+      }
+    
       var connection = topBlock.getFirstStatementConnection();
       var subBlock;
-      var duplicate;
 
       // console.log('decompose');
       
       // connect subblock(s), if present
-      for (let i = 0; i < 2; i++) {
-          if (customProperties_[i] !== null) {
-            subBlock = workspace.newBlock(customProperties_[i]);
+      for (let i = 0; i < this.customMaxProperties_; i++) {
+          if (customProperties[i] !== null) {
+            subBlock = workspace.newBlock(customProperties[i]);
             if (subBlock.disabled === true) {
                 subBlock.dispose(false, true);
             }
             else {
                 subBlock.initSvg();
-                if (i == 1) {
+                if (i == (this.customMaxProperties_ - 1)) {
                     subBlock.setNextStatement(false);
                 }
                 connection.connect(subBlock.previousConnection);
@@ -2539,41 +2557,56 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
    * @this Blockly.Block
    */
   compose: function(topBlock) {
-      var target = topBlock.getFirstStatementConnection().targetBlock();
-      var next_target;
+      var next_target = topBlock.getFirstStatementConnection().targetBlock();
+      var target;
+      var customProperties = [];
+      for (let i = 0; i < this.customMaxProperties_; i++) {
+          customProperties.push(null);
+      }
       
       // console.log('compose');
       
       // save connected blocks in the right order and remove duplicates
-      if (target === null) {
-          this.customProperty0_ = null;
-          this.customProperty1_ = null;
-      }
-      else {
-          this.customProperty0_ = target.type;
-          this.customProperty1_ = null;
-          next_target = target.getNextBlock();
-          
-          if (next_target !== null) {
-            if (this.customProperty0_ == next_target.type) {
-                next_target.dispose(true, true);
-                next_target = target.getNextBlock();
-            }
-
-            if (next_target !== null) {
-                target = next_target;
-                this.customProperty1_ = target.type;
-                next_target = target.getNextBlock();
-            
-                if (next_target !== null) {
-                    target.nextConnection.disconnect()
-                    next_target.dispose(false, true);
-                }
-                
-                target.setNextStatement(false);                    
-            }
+      if (next_target !== null) {
+          let i = 0;
+          let j = 0;
+          for (j = 0; j < this.customMaxProperties_; j++) {
+              target = next_target;
+              
+              /* determine if target is a duplicate */
+              let duplicate = false;
+              for (let k = 0; k < j; k++) {
+                  duplicate = (customProperties[k] == target.type);
+                  if (duplicate) break;
+              }
+              next_target = target.getNextBlock();
+              if (duplicate) {                  
+                  //console.log('Disposing block no: ', j);
+                  target.dispose(true, true);   /* heal, animate */
+                  j--;
+              }
+              else {
+                  customProperties[i++] = target.type;
+              }
+              
+              if (next_target === null) { j++; break; }
           }
+                  
+          /* in case there is one block too many */
+          if (next_target !== null) {
+              target.nextConnection.disconnect();
+              //console.log('Disposing final block');
+              next_target.dispose(false, true); /* don't heal, animate */
+          }
+          
+          if (j == this.customMaxProperties_) {              
+              target.setNextStatement(false);
+          }          
       }
+      
+      for (let i = 0; i < this.customMaxProperties_; i++) {
+          this["customProperty" + String(i) + "_"] = customProperties[i];
+      }      
 
       this.updateShape_();  // update original block in underlying workspace
   },
@@ -2590,46 +2623,62 @@ Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN = {
         }
         if (this.getField('FIELDID4')) {
             this.customTickPeriod_ = Number(this.getFieldValue('FIELDID4'));
-        }        
+        }    
+        if (this.getField('FIELDID6')) {
+            this.customCellName_ = this.getFieldValue('FIELDID6');
+        }  
+        if (this.getField('FIELDID8')) {
+            this.customCellUnit_ = this.getFieldValue('FIELDID8');
+        }          
         this.removeInput('CUSTOM_INPUT');
     }
 
-    var input = null;
-
     // reinstall inputs and reconnect
-    if (this.customProperty0_ !== null) {
-        input = this.appendDummyInput('CUSTOM_INPUT')
-                    .setAlign(Blockly.ALIGN_RIGHT);
-        switch (this.customProperty0_) {
-            case 'lasso_custom_callback_mutable_option' : {
-                input.appendField('Callback:', 'FIELDID1')
-                     .appendField(new Blockly.FieldTextInput(this.customCallback_), 'FIELDID2')
-                if (this.customProperty1_ !== null) {
-                    input.appendField('Tick period:', 'FIELDID3')
-                        .appendField(new Blockly.FieldNumber(this.customTickPeriod_, 1, 'inf', 1), 'FIELDID4');
-                }
-                break;
-            }
-            case 'lasso_custom_period_mutable_option' : {
-                input.appendField('Tick period:', 'FIELDID3')
-                     .appendField(new Blockly.FieldNumber(this.customTickPeriod_, 1, 'inf', 1), 'FIELDID4');
-                if (this.customProperty1_ !== null) {
-                    input.appendField('Callback:', 'FIELDID1')
-                        .appendField(new Blockly.FieldTextInput(this.customCallback_), 'FIELDID2');
-                }
-                break;
-            }
-            default : {}
-        }
+    var customProperties = [];
+    for (let i = 0; i < this.customMaxProperties_; i++) {
+      customProperties.push(this["customProperty" + String(i) + "_"]);
+    }
+    let customPropertiesExist = false;
+    for (let i = 0; i < this.customMaxProperties_; i++) {
+        if (customProperties[i] !== null) customPropertiesExist = true;
     }
     
+    if (customPropertiesExist) {
+        let input = this.appendDummyInput('CUSTOM_INPUT')
+                        .setAlign(Blockly.ALIGN_RIGHT);
+        for (let i = 0; i < this.customMaxProperties_; i++) {
+            switch (customProperties[i]) {
+                case 'lasso_custom_callback_mutable_option' : {
+                    input.appendField('Callback:', 'FIELDID1')
+                         .appendField(new Blockly.FieldTextInput(this.customCallback_), 'FIELDID2')
+                    break;
+                }
+                case 'lasso_custom_period_mutable_option' : {
+                    input.appendField('Period:', 'FIELDID3')
+                         .appendField(new Blockly.FieldNumber(this.customTickPeriod_, 1, 'inf', 1), 'FIELDID4');
+                    break;
+                }
+                case 'lasso_custom_cellname_mutable_option' : {
+                    input.appendField('Name:', 'FIELDID5')
+                         .appendField(new Blockly.FieldTextInput(this.customCellName_), 'FIELDID6');
+                    break;
+                }
+                case 'lasso_custom_cellunit_mutable_option' : {
+                    input.appendField('Unit:', 'FIELDID7')
+                         .appendField(new Blockly.FieldTextInput(this.customCellUnit_), 'FIELDID8');
+                    break;
+                }
+                default : {}
+            }
+        }
+    }
   }
 };
 
 Blockly.Extensions.registerMutator('lasso_register_datacell_mutator',
     Blockly.Constants.lasso.REGISTER_DATACELL_MIXIN,
     null,
-    ['lasso_custom_callback_mutable_option', 'lasso_custom_period_mutable_option']);
+    ['lasso_custom_callback_mutable_option', 'lasso_custom_period_mutable_option', 'lasso_custom_cellname_mutable_option', 'lasso_custom_cellunit_mutable_option']);
 
 
 //----------------//
@@ -2641,7 +2690,6 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "orion_custom_defaults_mutable_option",
   "message0": "Custom defaults",
-  "inputsInline": true,
   "previousStatement": null,
   "colour": 195,
   "tooltip": "Custom defaults",
@@ -2650,7 +2698,6 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_custom_callback_mutable_option",
   "message0": "Custom callback",
-  "inputsInline": true,
   "previousStatement": null,
   "nextStatement": null,
   "colour": 195,
@@ -2660,13 +2707,30 @@ Blockly.defineBlocksWithJsonArray([
 {
   "type": "lasso_custom_period_mutable_option",
   "message0": "Custom tick period",
-  "inputsInline": true,
   "previousStatement": null,
   "nextStatement": null,
   "colour": 195,
   "tooltip": "Custom tick period",
   "helpUrl": "",
   "extensions": ["lasso_period_mutable_extension"]
+},
+{
+  "type": "lasso_custom_cellname_mutable_option",
+  "message0": "Custom datacell name",
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 195,
+  "tooltip": "Custom datacell name",
+  "helpUrl": ""
+},
+{
+  "type": "lasso_custom_cellunit_mutable_option",
+  "message0": "Custom datacell unit",
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 195,
+  "tooltip": "Custom datacell unit",
+  "helpUrl": ""
 }
 ]);
 
