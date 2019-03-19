@@ -2197,6 +2197,10 @@ Blockly.defineBlocksWithJsonArray([
       "name": "CALLBACKS",
       "options": [
         [
+          "None",
+          "OPTION_NONE"
+        ],
+        [
           "Strobe activation",
           "OPTION_STROBE_ACTIVATION"
         ],
