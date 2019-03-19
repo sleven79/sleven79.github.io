@@ -776,7 +776,7 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     var periodChange_cb = false;
     if ((cbs == "OPTION_PERIOD_CHANGE") || (cbs == "OPTION_BOTH")) {
         periodChange_cb = true;
-        callbacks.push("uint16_t lasso_perCallback_" + target + "(uint16_t period) {\r\n    /* validate 'period' value here */\r\n}\r\n");
+        callbacks.push("uint16_t lasso_perCallback_" + target + "(uint16_t period) {\r\n    /* validate 'period' value here, return '0' is unacceptable */\r\n    return period;\r\n}\r\n");
     }   
     
     code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target;
