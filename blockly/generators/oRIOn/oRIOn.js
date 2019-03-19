@@ -754,11 +754,12 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     // block type: STATEMENT
     // ---------------------
     // inputs: STATEMENTS
-    // fields: TARGET, DYNASTROBE, CRC, CALLBACKS
+    // fields: TARGET, DYNASTROBE, CRC, CALLBACKS, CALLBACK_ENABLE
     var target = block.getFieldValue('TARGET').split('_')[1];
     var dynastrobe = (block.getFieldValue('DYNASTROBE') == 'OPTION_ON');   // not used for code generation
     var crc = (block.getFieldValue('CRC') == 'OPTION_ON');
-    enable_callbacks.set(block.getFieldValue('CALLBACKS') == 'OPTION_ON');
+    var cbs = block.getFieldValue('CALLBACKS');
+    enable_callbacks.set(block.getFieldValue('CALLBACK_ENABLE') == 'OPTION_ON');
     var callbacks = [];
     var statements = Blockly.JavaScript.statementToCode(block, 'STATEMENTS').split('\r\n');
     
@@ -766,7 +767,31 @@ Blockly.JavaScript['lasso_init'] = function(block) {
     var user_callbacks = ['while(1);', 'while(1);', 'while(1);'];
         
     var code = "//-------//\r\n// Lasso //\r\n//-------//\r\n\r\n";
-    code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target + ", NULL, NULL";
+    
+    var strobeActivation_cb = false;
+    if ((cbs == "OPTION_STROBE_ACTIVATION") || (cbs == "OPTION_BOTH")) {
+        strobeActivation_cb = true;
+        callbacks.push("void lasso_actCallback_" + target + "(bool startStrobe) {\r\n    /* your code here */\r\n}\r\n");
+    }   
+    var periodChange_cb = false;
+    if ((cbs == "OPTION_PERIOD_CHANGE") || (cbs == "OPTION_BOTH")) {
+        periodChange_cb = true;
+        callbacks.push("uint16_t lasso_perCallback_" + target + "(uint16_t period) {\r\n    /* validate 'period' value here */\r\n}\r\n");
+    }   
+    
+    code += "if (lasso_hostRegisterCOM(&lasso_comSetup_" + target + ", &lasso_comCallback_" + target;
+    if (strobeActivation_cb) {
+        code += ", &lasso_actCallback_" + target + ",";
+    }
+    else {
+        code += ", NULL,";
+    }
+    if (periodChange_cb) {
+        code += " &lasso_chgCallback_" + target;
+    }
+    else {
+        code += " NULL";
+    }
     if (crc) {
         code += ", &lasso_crcCallback_" + target;
         callbacks.push("uint32_t lasso_crcCallback_" + target + "(uint8_t* src, uint32_t cnt) {\r\n" + crc_demo_code);
@@ -784,7 +809,7 @@ Blockly.JavaScript['lasso_init'] = function(block) {
                 if ((w != 'bool') && (w != 'char') && (w != 'float')) { 
                     w += "_t";
                 }
-                callbacks.push("bool " + v + "(void* in) {\r\n    " + w + " val = *(" + w + ")in;\r\n\n    /* your code here */\r\n\n    /* return true if value of 'in' is acceptable */\r\n    return true;\r\n}\r\n");
+                callbacks.push("bool " + v + "(void* const in) {\r\n    " + w + " val = *(" + w + ")in;\r\n\n    /* your code here */\r\n\n    /* return true if value of 'in' is acceptable */\r\n    return true;\r\n}\r\n");
             }
         }
     }
